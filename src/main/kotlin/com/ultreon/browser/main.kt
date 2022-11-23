@@ -1,15 +1,20 @@
-package me.qboi.texteditor.com.example.flatlaf
+package com.ultreon.browser
 
-import com.example.flatlaf.AppPrefs
-import com.example.flatlaf.MainFrame
 import com.formdev.flatlaf.FlatLightLaf
+import com.ultreon.browser.main.AppPrefs
+import com.ultreon.browser.main.MainFrame
 import org.oxbow.swingbits.dialog.task.TaskDialogs
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 
-fun main() {
-    AppPrefs.init("me.qboi.texteditor")
+lateinit var argv: Array<String>
+    private set
+
+fun main(args: Array<String>) {
+    argv = args
+
+    AppPrefs.init(APP_ID)
     AppPrefs.setupLaf(arrayOf())
 
     SwingUtilities.invokeLater {

@@ -17,7 +17,7 @@
  * Changes made: Reformatted code with IntelliJ IDEA. And converted to Kotlin.
  * Source: https://github.com/JFormDesigner/FlatLaf
  */
-package com.example.flatlaf.intellijthemes
+package com.ultreon.browser.intellijthemes
 
 import java.io.File
 

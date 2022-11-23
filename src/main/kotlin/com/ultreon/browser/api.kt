@@ -1,4 +1,4 @@
-package com.example.flatlaf
+package com.ultreon.browser
 
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction

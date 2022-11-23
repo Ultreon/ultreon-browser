@@ -1,3 +1,10 @@
+package com.ultreon.browser.dialog.font
+
+import java.awt.BorderLayout
+import java.awt.GridLayout
+import javax.swing.JButton
+import javax.swing.JPanel
+
 /*
  * JCommon : a free general purpose class library for the Java(tm) platform
  *
@@ -24,20 +31,19 @@
  * [Java is a trademark or registered trademark of Sun Microsystems, Inc.
  * in the United States and other countries.]
  *
- * ---------------------
- * FontDisplayField.java
- * ---------------------
+ * -------------------
+ * StandardDialog.java
+ * -------------------
  * (C) Copyright 2000-2008, by Object Refinery Limited.
  *
  * Original Author:  David Gilbert (for Object Refinery Limited);
  * Contributor(s):   Arnaud Lelievre;
  *
- * $Id: FontDisplayField.java,v 1.6 2008/12/18 09:57:32 mungady Exp $
+ * $Id: StandardDialog.java,v 1.7 2008/12/18 09:57:32 mungady Exp $
  *
  * Changes (from 26-Oct-2001)
- * ----------------------------------
+ * --------------------------
  * 26-Oct-2001 : Changed package to com.jrefinery.ui.*;
- * 14-Oct-2002 : Fixed errors reported by Checkstyle (DG);
  * 08-Sep-2003 : Added internationalization via use of properties
  *               resourceBundle (RFE 690236) (AL);
  * 18-Dec-2008 : Use ResourceBundleWrapper - see JFreeChart patch 1607918 by
@@ -45,64 +51,52 @@
  *
  */
 
-package com.example.flatlaf.dialog.font
-
-import java.awt.Font
-import javax.swing.JTextField
-
 /**
- * A field for displaying a font selection.  The display field itself is
- * read-only, to the developer must provide another mechanism to allow the
- * user to change the font.
+ * A 'ready-made' panel that has one button on the left and two buttons on the right - nested
+ * panels and layout managers take care of resizing.
  *
  * @author David Gilbert
  */
-internal class FontDisplayField : JTextField {
-    /**
-     * Standard constructor - builds a FontDescriptionField initialised with
-     * the specified font.
-     *
-     * @param font  the font.
-     */
-    constructor(font: Font?) : super("") {
-        displayFont = font
-        isEnabled = false
-    }
+internal class L1R2ButtonPanel
+/**
+ * Standard constructor - creates a three button panel with the specified button labels.
+ *
+ * @param label1  the label for button 1.
+ * @param label2  the label for button 2.
+ * @param label3  the label for button 3.
+ */(label1: String?, label2: String?, label3: String?) : JPanel() {
 
     /**
-     * The current font.
+     * Returns a reference to button 1, allowing the caller to set labels, action-listeners etc.
+     *
+     * @return the left button.
      */
-    @Suppress("RedundantGetter")
-    var displayFont: Font? = null
-        /**
-         * Returns the current font.
-         *
-         * @return the font.
-         */
-        get() = field
-        /**
-         * Sets the font.
-         *
-         * @param font  the font.
-         */
-        set(font) {
-            field = font
-            text = fontToString(displayFont)
-            this.font = font
-        }
+    val leftButton: JButton
 
     /**
-     * Returns a string representation of the specified font.
+     * Returns a reference to button 2, allowing the caller to set labels, action-listeners etc.
      *
-     * @param font  the font.
-     *
-     * @return a string describing the font.
+     * @return the right button 1.
      */
-    private fun fontToString(font: Font?): String {
-        return if (font != null) {
-            font.fontName + ", " + font.size
-        } else {
-            "No Font Selected"
-        }
+    val rightButton1: JButton
+
+    /**
+     * Returns a reference to button 3, allowing the caller to set labels, action-listeners etc.
+     *
+     * @return  the right button 2.
+     */
+    val rightButton2: JButton
+
+    init {
+        layout = BorderLayout()
+        leftButton = JButton(label1)
+        val rightButtonPanel = JPanel(GridLayout(1, 2))
+        rightButton1 = JButton(label2)
+        rightButton2 = JButton(label3)
+        rightButtonPanel.add(rightButton1)
+        rightButtonPanel.add(rightButton2)
+        add(leftButton, BorderLayout.WEST)
+        add(rightButtonPanel, BorderLayout.EAST)
     }
+
 }

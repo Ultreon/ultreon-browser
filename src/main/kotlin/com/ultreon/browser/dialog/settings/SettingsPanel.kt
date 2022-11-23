@@ -1,9 +1,9 @@
 @file:Suppress("unused")
 
-package com.example.flatlaf.dialog.settings
+package com.ultreon.browser.dialog.settings
 
-import com.example.flatlaf.MainFrame
-import com.example.flatlaf.intellijthemes.IJThemesPanel
+import com.ultreon.browser.intellijthemes.IJThemesPanel
+import com.ultreon.browser.main.MainFrame
 import java.awt.Component
 import java.awt.Container
 import java.awt.LayoutManager

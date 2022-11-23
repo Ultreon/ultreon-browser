@@ -1,0 +1,299 @@
+package com.ultreon.browser.main
+
+import com.ultreon.browser.*
+import com.ultreon.browser.dialog.AboutDialog
+import com.ultreon.browser.dialog.settings.SettingsDialog
+import com.ultreon.browser.intellijthemes.IJThemesPanel
+import me.friwi.jcefmaven.CefAppBuilder
+import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
+import me.friwi.jcefmaven.impl.progress.ConsoleProgressHandler
+import org.cef.CefApp
+import org.cef.CefClient
+import org.cef.browser.CefBrowser
+import org.cef.browser.CefFrame
+import org.cef.browser.CefMessageRouter
+import org.cef.handler.CefDisplayHandlerAdapter
+import org.cef.handler.CefFocusHandlerAdapter
+import java.awt.*
+import java.awt.event.*
+import java.io.File
+import java.net.URI
+import javax.imageio.ImageIO
+import javax.swing.*
+import kotlin.system.exitProcess
+
+
+/*
+ * InternalFrameDemo.java requires:
+ *   MyInternalFrame.java
+ */
+class MainFrame : JFrame("$APP_NAME - $APP_VERSION") {
+    private val dataDir: File = File(appData, "UltreonBrowser")
+    private var browserFocus: Boolean = false
+    private lateinit var app: CefApp
+    private lateinit var client: CefClient
+    private lateinit var browser: CefBrowser
+    private lateinit var browserUI: Component
+    private lateinit var toolBar: JToolBar
+    private lateinit var address: JTextField
+    private lateinit var prevBtn: JButton
+    private lateinit var nextBtn: JButton
+    private lateinit var searchBtn: JButton
+    private val useOSR: Boolean = false
+
+    init {
+        // Set instance
+        instance = this
+
+        themesPanel = IJThemesPanel()
+
+        // Get screen information.
+        val environment = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        val screen = environment.defaultScreenDevice
+        val displayMode = screen.displayMode
+        val position = screen.defaultConfiguration.bounds.location
+        this.setSize(1024, 640)
+
+        this.iconImage = ImageIO.read(APP_ICON_REF)
+
+        // Set the frame in the middle of the default screen.
+        this.setLocation(
+            position.x + (displayMode.width - this.width) / 2,
+            position.y + (displayMode.height - this.height) / 2
+        )
+
+        defaultCloseOperation = DO_NOTHING_ON_CLOSE
+
+        contentPane = createContentPane()
+        jMenuBar = createMenuBar()
+    }
+
+    private fun createContentPane(): Container {
+        val pane = JPanel(BorderLayout())
+
+        //Create a new CefAppBuilder instance
+        val builder = CefAppBuilder()
+
+        // windowless_rendering_enabled must be set to false if not wanted.
+
+
+        // windowless_rendering_enabled must be set to false if not wanted.
+        builder.cefSettings.windowless_rendering_enabled = useOSR
+        // USE builder.setAppHandler INSTEAD OF CefApp.addAppHandler!
+        // Fixes compatibility issues with MacOSX
+        // USE builder.setAppHandler INSTEAD OF CefApp.addAppHandler!
+        // Fixes compatibility issues with MacOSX
+
+        builder.setAppHandler(object : MavenCefAppHandlerAdapter() {
+            override fun stateHasChanged(state: CefApp.CefAppState) {
+                // Shutdown the app if the native CEF part is terminated
+                if (state == CefApp.CefAppState.TERMINATED) exitProcess(0)
+            }
+        })
+
+        //Configure the builder instance
+        builder.setInstallDir(File("cef")) //Default
+        builder.setProgressHandler(ConsoleProgressHandler()) //Default
+        builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
+        builder.cefSettings.cache_path = dataDir.toString()
+        builder.addJcefArgs(*argv)
+
+        //Build a CefApp instance using the configuration above
+        app = builder.build()
+        client = app.createClient()
+
+        val msgRouter = CefMessageRouter.create()
+        client.addMessageRouter(msgRouter)
+
+        browser = client.createBrowser("https://google.com", useOSR, true)
+        browserUI = browser.uiComponent
+        toolBar = createToolbar()
+
+        client.addFocusHandler(object : CefFocusHandlerAdapter() {
+            override fun onGotFocus(browser: CefBrowser) {
+                if (browserFocus) return
+                browserFocus = true
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
+                browser.setFocus(true)
+            }
+
+            override fun onTakeFocus(browser: CefBrowser, next: Boolean) {
+                browserFocus = false
+            }
+        })
+
+        addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(e: WindowEvent) {
+                CefApp.getInstance().dispose()
+                dispose()
+            }
+        })
+
+        pane.add(browserUI, BorderLayout.CENTER)
+        pane.add(toolBar, BorderLayout.NORTH)
+
+        return pane
+    }
+
+    private fun createToolbar(): JToolBar {
+        val toolBar = JToolBar()
+        prevBtn = JButton("  ◀  ").also {
+            it.addActionListener { _ -> browser.goBack()}
+            toolBar.add(it)
+        }
+        nextBtn = JButton("  ▶  ").also {
+            it.addActionListener { _ -> browser.goForward()}
+            toolBar.add(it)
+        }
+        address = JTextField(browser.url).also {
+            it.addActionListener { _ -> browser.loadURL(it.text) }
+            toolBar.add(it)
+        }
+        searchBtn = JButton("  🔍  ").also {
+            it.addActionListener { _ -> browser.loadURL(it.text) }
+            toolBar.add(it)
+        }
+
+
+        // Update the address field when the browser URL changes.
+        client.addDisplayHandler(object : CefDisplayHandlerAdapter() {
+            override fun onAddressChange(browser: CefBrowser, frame: CefFrame, url: String) {
+                address.text = url
+            }
+        })
+
+        address.addFocusListener(object : FocusAdapter() {
+            override fun focusGained(e: FocusEvent) {
+                if (!browserFocus) return
+                browserFocus = false
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
+                address.requestFocus()
+            }
+        })
+
+        return toolBar
+    }
+
+    private fun createMenuBar(): JMenuBar {
+        val menuBar = JMenuBar()
+
+        //Set up the lone menu.
+        val windowMenu = JMenu("File")
+        windowMenu.mnemonic = KeyEvent.VK_W
+        menuBar.add(windowMenu)
+
+        //Set up the first menu item.
+        val openItem = JMenuItem("Open...")
+        openItem.mnemonic = KeyEvent.VK_O
+        openItem.accelerator = KeyStroke.getKeyStroke("control O")
+        openItem.action = action("Open") { openFile() }
+        windowMenu.add(openItem)
+
+        //Set up the first menu item.
+        val settingsItem = JMenuItem("Settings...")
+        settingsItem.mnemonic = KeyEvent.VK_O
+        settingsItem.accelerator = KeyStroke.getKeyStroke("control O")
+        settingsItem.action = action("Settings") { configureTheme() }
+        windowMenu.add(settingsItem)
+
+        //Set up the second menu item.
+        val quitItem = JMenuItem("Quit")
+        quitItem.mnemonic = KeyEvent.VK_Q
+        quitItem.accelerator = KeyStroke.getKeyStroke("alt F4")
+        quitItem.action = action("Quit") { quit() }
+        windowMenu.add(quitItem)
+
+        val helpMenu = JMenu("Help")
+        windowMenu.mnemonic = KeyEvent.VK_H
+        menuBar.add(helpMenu)
+
+        //Set up the first menu item.
+        val aboutItem = JMenuItem("About")
+        aboutItem.mnemonic = KeyEvent.VK_A
+        aboutItem.accelerator = KeyStroke.getKeyStroke("F1")
+        aboutItem.action = action("About") { showAbout() }
+        helpMenu.add(aboutItem)
+
+        //Set up the first menu item.
+        val newIssueItem = JMenuItem("New Issue")
+        newIssueItem.mnemonic = KeyEvent.VK_I
+        newIssueItem.accelerator = KeyStroke.getKeyStroke("F8")
+        newIssueItem.action = action("New Issue") { openNewIssuePage() }
+        helpMenu.add(newIssueItem)
+
+        //Set up the first menu item.
+        val issueTrackerItem = JMenuItem("Issue Tracker")
+        issueTrackerItem.mnemonic = KeyEvent.VK_S
+        issueTrackerItem.accelerator = KeyStroke.getKeyStroke("control F8")
+        issueTrackerItem.action = action("Issue Tracker") { openIssueTracker() }
+        helpMenu.add(issueTrackerItem)
+
+        return menuBar
+    }
+
+    /**
+     * Opens the issues tracker page in the default browser.
+     */
+    private fun openIssueTracker() {
+        Desktop.getDesktop().browse(URI(ISSUES_URL))
+    }
+
+    private fun openNewIssuePage() {
+        Desktop.getDesktop().browse(URI(NEW_ISSUE_URL))
+    }
+
+    private fun showAbout() {
+        AboutDialog(this, "About $APP_NAME", true).apply {
+            setLocationRelativeTo(this@MainFrame)
+            isVisible = true
+        }
+    }
+
+    private fun configureTheme() {
+        SettingsDialog(this, "Settings", true).apply {
+            setLocationRelativeTo(this@MainFrame)
+            isVisible = true
+        }
+    }
+
+    private fun openFile() {
+        val fileChooser = JFileChooser()
+        fileChooser.showOpenDialog(this)
+        val selectedFile = fileChooser.selectedFile
+        selectedFile?.let {
+            openFile(it)
+        }
+    }
+
+    private fun openFile(selectedFile: File) {
+        browser.loadURL(selectedFile.toURI().toString())
+    }
+
+    //Quit the application.
+    private fun quit() {
+        exitProcess(0)
+    }
+
+    companion object {
+        lateinit var instance: MainFrame
+            private set
+
+        lateinit var themesPanel: IJThemesPanel
+
+        /**
+         * Create the GUI and show it.  For thread safety,
+         * this method should be invoked from the
+         * event-dispatching thread.
+         */
+        fun start() {
+            //Make sure we have nice window decorations.
+            setDefaultLookAndFeelDecorated(true)
+
+            //Create and set up the window.
+            val frame = MainFrame()
+
+            //Display the window.
+            frame.isVisible = true
+        }
+    }
+}

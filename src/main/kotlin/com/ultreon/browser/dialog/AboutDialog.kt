@@ -1,7 +1,7 @@
-package com.example.flatlaf.dialog
+package com.ultreon.browser.dialog
 
-import com.example.flatlaf.*
-import com.example.flatlaf.dialog.font.L1R2ButtonPanel
+import com.ultreon.browser.SOURCE_URL
+import com.ultreon.browser.dialog.font.L1R2ButtonPanel
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.net.URI

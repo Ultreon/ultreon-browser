@@ -1,1 +1,1 @@
-rootProject.name = "flatlaf-template"
+rootProject.name = "ultreon-browser"

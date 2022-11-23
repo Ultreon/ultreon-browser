@@ -19,16 +19,16 @@
  */
 @file:Suppress("unused")
 
-package com.example.flatlaf.intellijthemes
+package com.ultreon.browser.intellijthemes
 
-import com.example.flatlaf.Settings
 import com.formdev.flatlaf.*
 import com.formdev.flatlaf.IntelliJTheme.ThemeLaf
 import com.formdev.flatlaf.extras.FlatAnimatedLafChange
 import com.formdev.flatlaf.extras.FlatSVGIcon
 import com.formdev.flatlaf.util.LoggingFacade
 import com.formdev.flatlaf.util.StringUtils
-import com.example.flatlaf.AppPrefs
+import com.ultreon.browser.main.AppPrefs
+import com.ultreon.browser.main.Settings
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Desktop
@@ -92,20 +92,6 @@ class IJThemesPanel : JPanel() {
 
         // add core themes at beginning
         categories[themes.size] = "Core Themes"
-        themes.add(
-            IJThemeInfo(
-                "System Theme",
-                null,
-                false,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                true
-            )
-        )
         if (showLight) themes.add(
             IJThemeInfo(
                 "FlatLaf Light",
@@ -511,6 +497,7 @@ class IJThemesPanel : JPanel() {
     }
 
     companion object {
+        @Suppress("SpellCheckingInspection")
         const val THEMES_PACKAGE = "/com/formdev/flatlaf/intellijthemes/themes/"
     }
 }

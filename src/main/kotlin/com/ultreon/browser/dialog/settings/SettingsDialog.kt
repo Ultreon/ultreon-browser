@@ -1,8 +1,8 @@
 @file:Suppress("unused")
 
-package com.example.flatlaf.dialog.settings
+package com.ultreon.browser.dialog.settings
 
-import com.example.flatlaf.dialog.StandardDialog
+import com.ultreon.browser.dialog.StandardDialog
 import java.awt.BorderLayout
 import java.awt.Dialog
 import java.awt.Dimension

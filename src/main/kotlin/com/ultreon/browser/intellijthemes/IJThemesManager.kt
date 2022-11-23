@@ -17,7 +17,7 @@
  * Changes made: Reformatted code with IntelliJ IDEA. And converted to Kotlin.
  * Source: https://github.com/JFormDesigner/FlatLaf
  */
-package com.example.flatlaf.intellijthemes
+package com.ultreon.browser.intellijthemes
 
 import com.formdev.flatlaf.json.Json
 import com.formdev.flatlaf.util.LoggingFacade
@@ -79,7 +79,7 @@ internal class IJThemesManager {
 
     fun loadThemesFromDirectory() {
         // get current working directory
-        val directory = File("").absoluteFile
+        val directory = File("Themes").absoluteFile
         val themeFiles =
             directory.listFiles { _: File?, name: String ->
                 name.endsWith(".theme.json") || name.endsWith(".properties")

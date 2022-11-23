@@ -1,6 +1,9 @@
-package com.example.flatlaf.dialog
+package com.ultreon.browser.dialog
 
-import com.example.flatlaf.*
+import com.ultreon.browser.APP_BANNER_REF
+import com.ultreon.browser.APP_NAME
+import com.ultreon.browser.APP_VERSION
+import com.ultreon.browser.BUILD_DATE
 import java.awt.Graphics
 import java.awt.Rectangle
 import javax.swing.JPanel

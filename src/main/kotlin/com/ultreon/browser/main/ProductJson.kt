@@ -1,14 +1,14 @@
-package com.example.flatlaf
+package com.ultreon.browser.main
 
 import com.google.gson.annotations.SerializedName
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Product info.
  *
  * @author Qboi123
  */
-@Internal
+@ApiStatus.Internal
 class ProductJson internal constructor() {
     var version: String = ""
         private set

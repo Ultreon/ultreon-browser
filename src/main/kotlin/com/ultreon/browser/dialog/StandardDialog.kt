@@ -42,9 +42,9 @@
 *
 */
 
-package com.example.flatlaf.dialog
+package com.ultreon.browser.dialog
 
-import com.example.flatlaf.dialog.font.L1R2ButtonPanel
+import com.ultreon.browser.dialog.font.L1R2ButtonPanel
 import java.awt.Dialog
 import java.awt.Frame
 import java.awt.event.ActionEvent
