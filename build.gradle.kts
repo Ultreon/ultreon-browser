@@ -148,14 +148,14 @@ tasks.jpackage {
     javaOptions = listOf("-Dfile.encoding=UTF-8")
 
     mac {
-        icon = "icons/icons.icns"
+        icon = "icons/icon.icns"
         macPackageIdentifier = "com.ultreon.notepadimproved"
         macPackageName = "notepad-improved"
         appVersion = packageVersion.replace(Regex("(\\d+\\.\\d+\\.\\d+).*"), "$1")
     }
 
     linux {
-        icon = "icons/icons.png"
+        icon = "icons/icon.png"
         linuxPackageName = "notepad-improved"
         linuxDebMaintainer = "Ultreon Team"
         linuxRpmLicenseType = "Ultreon API License v1.1"
@@ -165,7 +165,7 @@ tasks.jpackage {
     }
 
     windows {
-        icon = "icons/icons.ico"
+        icon = "icons/icon.ico"
         winMenu = true
         winDirChooser = true
         winConsole = false
