@@ -174,6 +174,6 @@ tasks.jpackage {
         winShortcut = false
         winUpgradeUuid = "0dd76e9b-dd95-495d-876e-9da69c86329c"
         winMenuGroup = "Ultreon Team"
-        appVersion = (version as String).replace("+local", ".0").replace("+", ".")
+        appVersion = (getViewVersion() as String).replace("+local", ".0").replace("+", ".")
     }
 }
