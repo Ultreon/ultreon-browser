@@ -1,0 +1,6 @@
+{
+  "id": "${project_id}",
+  "name": "${app_name}",
+  "version": "${version}",
+  "build-date": "${build_date}"
+}
