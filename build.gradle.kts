@@ -131,32 +131,32 @@ tasks.jpackage {
     input  = "$buildDir/jars"
     destination = "$buildDir/dist"
 
-    appName = "Notepad Improved 2"
+    appName = "Ultreon Browser"
     appVersion = project.version.toString()
     vendor = "Ultreon Team"
     copyright = "Copyright (c) 2022 Ultreon Team"
     runtimeImage = System.getProperty("java.home")
 
     mainJar = tasks.jar.get().archiveFileName.get()
-    mainClass = "com.ultreon.notepadimproved.MainKt"
+    mainClass = "com.ultreon.browser.MainKt"
 
     destination = "$buildDir/dist"
 
     licenseFile = "$projectDir/package/LICENSE.txt"
-    aboutUrl = "https://github.com/Ultreon/notepad-improved-2"
+    aboutUrl = "https://github.com/Ultreon/ultreon-browser"
 
     javaOptions = listOf("-Dfile.encoding=UTF-8")
 
     mac {
         icon = "icons/icon.icns"
-        macPackageIdentifier = "com.ultreon.notepadimproved"
-        macPackageName = "notepad-improved"
+        macPackageIdentifier = "com.ultreon.browser"
+        macPackageName = "ultreon-browser"
         appVersion = packageVersion.replace(Regex("(\\d+\\.\\d+\\.\\d+).*"), "$1")
     }
 
     linux {
         icon = "icons/icon.png"
-        linuxPackageName = "notepad-improved"
+        linuxPackageName = "ultreon-browser"
         linuxDebMaintainer = "Ultreon Team"
         linuxRpmLicenseType = "Ultreon API License v1.1"
         linuxAppRelease = "2"
