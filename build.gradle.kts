@@ -117,6 +117,14 @@ tasks.compileJava {
 
 mkdir("$projectDir/run/")
 
+task("copyDependencies", Copy::class) {
+    from(configurations.runtimeClasspath).into("$buildDir/jars")
+}
+
+task("copyJar", Copy::class) {
+    from(tasks.jar).into("$buildDir/jars")
+}
+
 tasks.jpackage {
     dependsOn("build", "copyDependencies", "copyJar")
 
