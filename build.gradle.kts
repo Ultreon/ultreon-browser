@@ -211,7 +211,7 @@ task("jpackageAlt", JPackageTask::class) {
     }
 
     linux {
-        icon = "icons/icon.png"0
+        icon = "icons/icon.png"
         linuxShortcut = true
         appVersion = project.version.toString()
         type = ImageType.APP_IMAGE
