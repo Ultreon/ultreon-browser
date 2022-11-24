@@ -151,15 +151,15 @@ jobs:
             case "${{ matrix.distro }}" in
               ubuntu*|jessie|stretch|buster|bullseye)
                 apt-get update -q -y
-                apt-get install -q -y git
+                apt-get install -q -y git openjdk-17-jdk
                 ;;
               fedora*)
                 dnf -y update
-                dnf -y install git which
+                dnf -y install git which openjdk-17-jdk
                 ;;
               alpine*)
                 apk update
-                apk add git
+                apk add git openjdk-17-jdk
                 ;;
             esac
 
