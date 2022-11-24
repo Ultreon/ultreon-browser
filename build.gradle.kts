@@ -213,8 +213,6 @@ task("jpackageAlt", JPackageTask::class) {
     linux {
         icon = "icons/icon.png"
         linuxPackageName = "ultreon-browser"
-        linuxDebMaintainer = "Ultreon Team"
-        linuxRpmLicenseType = "Ultreon API License v1.1"
         linuxShortcut = true
         appVersion = project.version.toString()
         type = ImageType.APP_IMAGE
