@@ -11,11 +11,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu:20.04
             java: 17
-          - os: fcos
+          - os: fedora:37
             java: 17
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.os }}
     name: Build on ${{ matrix.os }} for x86-64
     steps:
       - name: Checkout repository
