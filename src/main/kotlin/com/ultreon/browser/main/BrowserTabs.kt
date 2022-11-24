@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.net.URL
 import javax.swing.*
 
 
@@ -66,6 +67,23 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
             override fun mouseClicked(e: MouseEvent) {
                 if (e.button == 2) {
                     removeTabAt(indexOfTab(browserTab))
+                }
+                if (e.button == 1) {
+                    println("LEFT CLICK :: COUNT ${e.clickCount}")
+                    if (e.clickCount == 20) {
+                        try {
+                            val place = URL(browserTab.browser.url)
+                            println(place.host)
+                            if (place.host == "youtube.com" || place.host.endsWith(".youtube.com")) {
+                                println("YouTube")
+                                browserTab.goTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+                            } else {
+                                println("Not YouTube")
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
                 }
             }
         })
