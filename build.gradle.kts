@@ -172,7 +172,7 @@ tasks.jpackage {
         winPerUserInstall = true
         winShortcutPrompt = true
         winShortcut = false
-        winUpgradeUuid = "0dd76e9b-dd95-495d-876e-9da69c86329c"
+        winUpgradeUuid = "340c6842-b3bb-4173-bc87-c7c831cd1605"
         winMenuGroup = "Ultreon Team"
         appVersion = (getViewVersion() as String).replace("+local", ".0").replace("+", ".")
     }
