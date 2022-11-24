@@ -198,12 +198,11 @@ task("jpackageAlt", JPackageTask::class) {
 
     destination = "$buildDir/dist"
 
-    licenseFile = "$projectDir/package/LICENSE.txt"
-
     javaOptions = listOf("-Dfile.encoding=UTF-8")
 
     mac {
         aboutUrl = "https://github.com/Ultreon/ultreon-browser"
+        licenseFile = "$projectDir/package/LICENSE.txt"
         icon = "icons/icon.icns"
         macPackageIdentifier = "com.ultreon.browser"
         macPackageName = "ultreon-browser"
@@ -224,6 +223,7 @@ task("jpackageAlt", JPackageTask::class) {
 
     windows {
         aboutUrl = "https://github.com/Ultreon/ultreon-browser"
+        licenseFile = "$projectDir/package/LICENSE.txt"
         icon = "icons/icon.ico"
         winMenu = true
         winDirChooser = true
