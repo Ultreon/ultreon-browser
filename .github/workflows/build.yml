@@ -77,6 +77,10 @@ jobs:
     # Run steps on a matrix of 3 arch/distro combinations
     strategy:
       matrix:
+        # Use these Java versions
+        java: [
+          17    # Minimum supported
+        ]
         include:
           - arch: aarch64
             distro: ubuntu20.04
