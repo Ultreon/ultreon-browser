@@ -16,7 +16,7 @@ jobs:
           - os: fedora37
             java: 17
     runs-on: ${{ matrix.os }}
-    name: Build on ${{ matrix.distro }} for x86-64
+    name: Build on ${{ matrix.os }} for x86-64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -130,7 +130,7 @@ jobs:
         # and run on both Linux and not Windows
         os: [macOS-11]
     runs-on: ${{ matrix.os }}
-    name: Build on ${{ matrix.distro }}
+    name: Build on ${{ matrix.os }}
     steps:
       - name: checkout repository
         uses: actions/checkout@v2
@@ -161,7 +161,7 @@ jobs:
         # and run on both Linux and not Windows
         os: [windows-2019]
     runs-on: ${{ matrix.os }}
-    name: Build on ${{ matrix.distro }}
+    name: Build on ${{ matrix.os }}
     steps:
       - name: checkout repository
         uses: actions/checkout@v2
