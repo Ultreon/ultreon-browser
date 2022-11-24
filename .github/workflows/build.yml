@@ -10,96 +10,46 @@ jobs:
   build-linux:
     strategy:
       matrix:
-        # Use these Java versions
-        java: [
-            17    # Minimum supported
-        ]
-        # and run on both Linux and not Windows
-        os: [ubuntu-20.04]
+        include:
+          - os: ubuntu20.04
+            java: 17
+          - os: fedora37
+            java: 17
     runs-on: ${{ matrix.os }}
+    name: Build on ${{ matrix.distro }} for x86-64
     steps:
-      - name: checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v2
-      - name: validate gradle wrapper
+      - name: Validate gradle wrapper
         uses: gradle/wrapper-validation-action@v1
-      - name: setup jdk ${{ matrix.java }}
+      - name: Setup jdk ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
-      - name: make gradle wrapper executable
+      - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
-      - name: build
+      - name: Build artifact
         run: ./gradlew jpackage --info
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
-      - name: capture the build artifacts
+      - name: Capture the build artifacts
         uses: actions/upload-artifact@v2
         with:
           name: Ultreon Browser Linux DEB Build ${{ github.run_number }}
           path: build/dist/
-
-  build-linux-rpm:
-    strategy:
-      matrix:
-        # Use these Java versions
-        java: [
-            17    # Minimum supported
-        ]
-        # and run on both Linux and not Windows
-        os: [fedora37]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: checkout repository
-        uses: actions/checkout@v2
-      - name: validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
-      - name: setup jdk ${{ matrix.java }}
-        uses: actions/setup-java@v1
-        with:
-          java-version: ${{ matrix.java }}
-      - name: make gradle wrapper executable
-        run: chmod +x ./gradlew
-      - name: build
-        run: ./gradlew jpackage --info
-        env:
-          GITHUB_BUILD_NUMBER: ${{ github.run_number }}
-      - name: capture the build artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: Ultreon Browser Linux RPM Build ${{ github.run_number }}
-          path: build/dist/
-
-  build_linux_arch:
+  build-linux-armv7:
     # The host should always be linux
     runs-on: ubuntu-18.04
-    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+    name: Build on ${{ matrix.distro }} for ${{ matrix.arch }}
 
     # Run steps on a matrix of 3 arch/distro combinations
     strategy:
       matrix:
         include:
-          - arch: aarch64
-            distro: ubuntu20.04
-            java: 17
-          - arch: ppc64le
-            distro: ubuntu20.04
-            java: 17
           - arch: armv7
             distro: ubuntu20.04
             java: 17
-          - arch: s390x
-            distro: ubuntu20.04
-            java: 17
-          - arch: aarch64
-            distro: fedora_latest
-            java: 17
-          - arch: ppc64le
-            distro: fedora_latest
-            java: 17
           - arch: armv7
-            distro: fedora_latest
-            java: 17
-          - arch: s390x
             distro: fedora_latest
             java: 17
 
@@ -168,18 +118,15 @@ jobs:
       - name: capture the build artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: Ultreon Browser Linux on ${{ matrix.arch }} Build ${{ github.run_number }}
+          name: Ultreon Browser Linux for ${{ matrix.arch }} Build ${{ github.run_number }}
           path: build/dist/
   build-macos:
     strategy:
       matrix:
-        # Use these Java versions
-        java: [
-            17    # Minimum supported
-        ]
-        # and run on both Linux and not Windows
-        os: [macOS-11]
+        java: 17 # Minimum supported
+        os: macOS-11
     runs-on: ${{ matrix.os }}
+    name: Build on ${{ matrix.distro }}
     steps:
       - name: checkout repository
         uses: actions/checkout@v2
@@ -203,13 +150,10 @@ jobs:
   build-windows:
     strategy:
       matrix:
-        # Use these Java versions
-        java: [
-            17    # Minimum supported
-        ]
-        # and run on both Linux and not Windows
-        os: [windows-2019]
+        java: 17 # Minimum supported
+        os: windows-2019
     runs-on: ${{ matrix.os }}
+    name: Build on ${{ matrix.distro }}
     steps:
       - name: checkout repository
         uses: actions/checkout@v2
