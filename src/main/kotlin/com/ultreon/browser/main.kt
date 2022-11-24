@@ -2,7 +2,7 @@ package com.ultreon.browser
 
 import com.formdev.flatlaf.FlatLightLaf
 import com.ultreon.browser.main.AppPrefs
-import com.ultreon.browser.main.MainFrame
+import com.ultreon.browser.main.UltreonBrowser
 import org.oxbow.swingbits.dialog.task.TaskDialogs
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
@@ -21,14 +21,14 @@ fun main(args: Array<String>) {
         Thread.setDefaultUncaughtExceptionHandler { _, ex ->
             crash(ex)
         }
-        MainFrame.start()
+        UltreonBrowser.start()
     }
 }
 
 @Throws(Exception::class)
 fun crash(e: Throwable) {
     try {
-        MainFrame.instance.dispose()
+        UltreonBrowser.instance.dispose()
     } catch (e: Exception) {
         // ignore
     }

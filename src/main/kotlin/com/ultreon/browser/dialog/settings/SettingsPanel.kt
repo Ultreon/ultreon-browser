@@ -3,7 +3,7 @@
 package com.ultreon.browser.dialog.settings
 
 import com.ultreon.browser.intellijthemes.IJThemesPanel
-import com.ultreon.browser.main.MainFrame
+import com.ultreon.browser.main.UltreonBrowser
 import java.awt.Component
 import java.awt.Container
 import java.awt.LayoutManager
@@ -26,7 +26,7 @@ class SettingsPanel : JPanel {
         layout = SpringLayout()
 
 //        val label = JLabel("Theme:")
-        themeComboBox = MainFrame.themesPanel
+        themeComboBox = UltreonBrowser.themesPanel
 //        label.labelFor = themeComboBox
 
 //        add(label)

@@ -14,10 +14,13 @@ import org.cef.browser.CefFrame
 import org.cef.browser.CefMessageRouter
 import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefFocusHandlerAdapter
-import java.awt.*
+import org.cef.handler.CefRequestHandlerAdapter
+import java.awt.BorderLayout
+import java.awt.Container
+import java.awt.GraphicsEnvironment
+import java.awt.KeyboardFocusManager
 import java.awt.event.*
 import java.io.File
-import java.net.URI
 import javax.imageio.ImageIO
 import javax.swing.*
 import kotlin.system.exitProcess
@@ -27,13 +30,12 @@ import kotlin.system.exitProcess
  * InternalFrameDemo.java requires:
  *   MyInternalFrame.java
  */
-class MainFrame : JFrame("$APP_NAME - $APP_VERSION") {
+class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
     private val dataDir: File = File(appData, "UltreonBrowser")
-    private var browserFocus: Boolean = false
+    internal var browserFocus: Boolean = false
     private lateinit var app: CefApp
     private lateinit var client: CefClient
-    private lateinit var browser: CefBrowser
-    private lateinit var browserUI: Component
+    private lateinit var tabs: BrowserTabs
     private lateinit var toolBar: JToolBar
     private lateinit var address: JTextField
     private lateinit var prevBtn: JButton
@@ -96,18 +98,62 @@ class MainFrame : JFrame("$APP_NAME - $APP_VERSION") {
         builder.setProgressHandler(ConsoleProgressHandler()) //Default
         builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
         builder.cefSettings.cache_path = dataDir.toString()
+        builder.cefSettings.user_agent_product = "UltreonBrowser/1.0.0"
         builder.addJcefArgs(*argv)
 
         //Build a CefApp instance using the configuration above
         app = builder.build()
         client = app.createClient()
 
+        addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(e: WindowEvent) {
+                app.dispose()
+                dispose()
+            }
+        })
+
         val msgRouter = CefMessageRouter.create()
         client.addMessageRouter(msgRouter)
 
-        browser = client.createBrowser("https://google.com", useOSR, true)
-        browserUI = browser.uiComponent
         toolBar = createToolbar()
+        tabs = BrowserTabs(client, this)
+
+        addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(e: WindowEvent) {
+                CefApp.getInstance().dispose()
+                dispose()
+            }
+        })
+
+        pane.add(tabs, BorderLayout.CENTER)
+        pane.add(toolBar, BorderLayout.NORTH)
+
+        return pane
+    }
+
+    private fun createToolbar(): JToolBar {
+        val toolBar = JToolBar()
+        prevBtn = JButton("  ◀  ").also {
+            it.addActionListener { _ -> tabs.selected.goBack()}
+            toolBar.add(it)
+        }
+        nextBtn = JButton("  ▶  ").also {
+            it.addActionListener { _ -> tabs.selected.goForward()}
+            toolBar.add(it)
+        }
+        address = JTextField().also {
+            it.addActionListener { _ -> tabs.selected.goTo(it.text) }
+            toolBar.add(it)
+        }
+        searchBtn = JButton("  🔍  ").also {
+            it.addActionListener { _ -> tabs.selected.goTo(it.text) }
+            toolBar.add(it)
+        }
+
+        searchBtn = JButton("  ➕  ").also {
+            it.addActionListener { _ -> tabs.createTab("https://google.com") }
+            toolBar.add(it)
+        }
 
         client.addFocusHandler(object : CefFocusHandlerAdapter() {
             override fun onGotFocus(browser: CefBrowser) {
@@ -122,43 +168,27 @@ class MainFrame : JFrame("$APP_NAME - $APP_VERSION") {
             }
         })
 
-        addWindowListener(object : WindowAdapter() {
-            override fun windowClosing(e: WindowEvent) {
-                CefApp.getInstance().dispose()
-                dispose()
-            }
-        })
-
-        pane.add(browserUI, BorderLayout.CENTER)
-        pane.add(toolBar, BorderLayout.NORTH)
-
-        return pane
-    }
-
-    private fun createToolbar(): JToolBar {
-        val toolBar = JToolBar()
-        prevBtn = JButton("  ◀  ").also {
-            it.addActionListener { _ -> browser.goBack()}
-            toolBar.add(it)
-        }
-        nextBtn = JButton("  ▶  ").also {
-            it.addActionListener { _ -> browser.goForward()}
-            toolBar.add(it)
-        }
-        address = JTextField(browser.url).also {
-            it.addActionListener { _ -> browser.loadURL(it.text) }
-            toolBar.add(it)
-        }
-        searchBtn = JButton("  🔍  ").also {
-            it.addActionListener { _ -> browser.loadURL(it.text) }
-            toolBar.add(it)
-        }
-
-
         // Update the address field when the browser URL changes.
         client.addDisplayHandler(object : CefDisplayHandlerAdapter() {
             override fun onAddressChange(browser: CefBrowser, frame: CefFrame, url: String) {
                 address.text = url
+            }
+
+            override fun onTitleChange(browser: CefBrowser, title: String?) {
+                tabs.onTitleChange(browser, title)
+            }
+        })
+
+        // Update the address field when the browser URL changes.
+        client.addRequestHandler(object : CefRequestHandlerAdapter() {
+            override fun onOpenURLFromTab(
+                browser: CefBrowser,
+                frame: CefFrame,
+                target_url: String,
+                user_gesture: Boolean
+            ): Boolean {
+                tabs.createTab(target_url)
+                return true
             }
         })
 
@@ -235,23 +265,23 @@ class MainFrame : JFrame("$APP_NAME - $APP_VERSION") {
      * Opens the issues tracker page in the default browser.
      */
     private fun openIssueTracker() {
-        Desktop.getDesktop().browse(URI(ISSUES_URL))
+        tabs.createTab(ISSUES_URL)
     }
 
     private fun openNewIssuePage() {
-        Desktop.getDesktop().browse(URI(NEW_ISSUE_URL))
+        tabs.createTab(NEW_ISSUE_URL)
     }
 
     private fun showAbout() {
         AboutDialog(this, "About $APP_NAME", true).apply {
-            setLocationRelativeTo(this@MainFrame)
+            setLocationRelativeTo(this@UltreonBrowser)
             isVisible = true
         }
     }
 
     private fun configureTheme() {
         SettingsDialog(this, "Settings", true).apply {
-            setLocationRelativeTo(this@MainFrame)
+            setLocationRelativeTo(this@UltreonBrowser)
             isVisible = true
         }
     }
@@ -266,7 +296,7 @@ class MainFrame : JFrame("$APP_NAME - $APP_VERSION") {
     }
 
     private fun openFile(selectedFile: File) {
-        browser.loadURL(selectedFile.toURI().toString())
+        tabs.createTab(selectedFile.toURI().toString())
     }
 
     //Quit the application.
@@ -275,7 +305,7 @@ class MainFrame : JFrame("$APP_NAME - $APP_VERSION") {
     }
 
     companion object {
-        lateinit var instance: MainFrame
+        lateinit var instance: UltreonBrowser
             private set
 
         lateinit var themesPanel: IJThemesPanel
@@ -290,7 +320,7 @@ class MainFrame : JFrame("$APP_NAME - $APP_VERSION") {
             setDefaultLookAndFeelDecorated(true)
 
             //Create and set up the window.
-            val frame = MainFrame()
+            val frame = UltreonBrowser()
 
             //Display the window.
             frame.isVisible = true

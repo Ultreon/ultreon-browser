@@ -28,6 +28,8 @@ val appData: File
         throw UnsupportedOperationException("Unsupported operating system: $osName")
     }
 
+val useOSR = false
+
 // Resources
 const val APP_ICON: String = "/icons/icon.png"
 const val APP_BANNER: String = "/images/banner.png"
