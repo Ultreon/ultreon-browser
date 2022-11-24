@@ -1,9 +1,6 @@
 package com.ultreon.browser.dialog
 
-import com.ultreon.browser.APP_BANNER_REF
-import com.ultreon.browser.APP_NAME
-import com.ultreon.browser.APP_VERSION
-import com.ultreon.browser.BUILD_DATE
+import com.ultreon.browser.*
 import java.awt.Graphics
 import java.awt.Rectangle
 import javax.swing.JPanel
@@ -21,6 +18,7 @@ class AboutPanel : JPanel() {
                 .replace("@(project-name)", APP_NAME)
                 .replace("@(version)", APP_VERSION)
                 .replace("@(build-date)", BUILD_DATE)
+                .replace("@(chrome-version)", CHROME_VERSION)
                 .replace("@(image)", APP_BANNER_REF.toString())
             it.close()
             return@let readText

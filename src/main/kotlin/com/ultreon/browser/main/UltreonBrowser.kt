@@ -2,9 +2,11 @@ package com.ultreon.browser.main
 
 import com.ultreon.browser.*
 import com.ultreon.browser.dialog.AboutDialog
+import com.ultreon.browser.dialog.ProgressDialog
 import com.ultreon.browser.dialog.settings.SettingsDialog
 import com.ultreon.browser.intellijthemes.IJThemesPanel
 import me.friwi.jcefmaven.CefAppBuilder
+import me.friwi.jcefmaven.IProgressHandler
 import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
 import me.friwi.jcefmaven.impl.progress.ConsoleProgressHandler
 import org.cef.CefApp
@@ -16,10 +18,8 @@ import org.cef.handler.*
 import org.cef.misc.BoolRef
 import org.cef.network.CefRequest
 import org.cef.network.CefResponse
-import java.awt.BorderLayout
-import java.awt.Container
-import java.awt.GraphicsEnvironment
-import java.awt.KeyboardFocusManager
+import org.oxbow.swingbits.dialog.task.TaskDialog
+import java.awt.*
 import java.awt.event.*
 import java.io.File
 import java.net.URL
@@ -27,6 +27,7 @@ import javax.imageio.ImageIO
 import javax.swing.*
 import kotlin.concurrent.thread
 import kotlin.system.exitProcess
+import me.friwi.jcefmaven.EnumProgress as SetupStage
 
 
 /*
@@ -79,16 +80,10 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
         //Create a new CefAppBuilder instance
         val builder = CefAppBuilder()
 
-        // windowless_rendering_enabled must be set to false if not wanted.
-
-
-        // windowless_rendering_enabled must be set to false if not wanted.
         builder.cefSettings.windowless_rendering_enabled = useOSR
-        // USE builder.setAppHandler INSTEAD OF CefApp.addAppHandler!
-        // Fixes compatibility issues with MacOSX
-        // USE builder.setAppHandler INSTEAD OF CefApp.addAppHandler!
-        // Fixes compatibility issues with MacOSX
 
+        // USE builder.setAppHandler INSTEAD OF CefApp.addAppHandler!
+        // Fixes compatibility issues with MacOSX
         builder.setAppHandler(object : MavenCefAppHandlerAdapter() {
             override fun stateHasChanged(state: CefApp.CefAppState) {
                 // Shutdown the app if the native CEF part is terminated
@@ -102,6 +97,29 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
         builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
         builder.cefSettings.cache_path = dataDir.toString()
         builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION Chrome/$CHROME_VERSION"
+
+//        val progress = ProgressDialog(null, "Setting up CEF")
+//        progress.size = Dimension(600, 450)
+//        progress.pack()
+//        progress.show()
+//        builder.setProgressHandler { stage: SetupStage, fl: Float ->
+//            progress.message = when (stage) {
+//                SetupStage.INSTALL -> "Installing CEF..."
+//                SetupStage.DOWNLOADING -> "Downloading files..."
+//                SetupStage.EXTRACTING -> "Extracting files..."
+//                SetupStage.LOCATING -> "Locating CEF..."
+//                SetupStage.INITIALIZING -> "Initializing..."
+//                SetupStage.INITIALIZED -> "Ready"
+//            }
+//
+//            if (stage == SetupStage.INITIALIZED) {
+//                println("Stop")
+//            }
+//
+//            progress.setValue(fl)
+//            progress.revalidate()
+//        }
+
         builder.addJcefArgs(*argv)
 
         //Build a CefApp instance using the configuration above
