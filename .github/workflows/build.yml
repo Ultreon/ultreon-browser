@@ -46,7 +46,7 @@ jobs:
             17    # Minimum supported
         ]
         # and run on both Linux and not Windows
-        os: [fedora_latest]
+        os: [fedora37]
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout repository
