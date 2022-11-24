@@ -118,13 +118,17 @@ jobs:
       - name: capture the build artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: Ultreon Browser Linux for ${{ matrix.arch }} Build ${{ github.run_number }}
+          name: Ultreon Browser Linux on ${{ matrix.arch }} Build ${{ github.run_number }}
           path: build/dist/
   build-macos:
     strategy:
       matrix:
-        java: 17 # Minimum supported
-        os: macOS-11
+        # Use these Java versions
+        java: [
+            17    # Minimum supported
+        ]
+        # and run on both Linux and not Windows
+        os: [macOS-11]
     runs-on: ${{ matrix.os }}
     name: Build on ${{ matrix.distro }}
     steps:
@@ -150,8 +154,12 @@ jobs:
   build-windows:
     strategy:
       matrix:
-        java: 17 # Minimum supported
-        os: windows-2019
+        # Use these Java versions
+        java: [
+            17    # Minimum supported
+        ]
+        # and run on both Linux and not Windows
+        os: [windows-2019]
     runs-on: ${{ matrix.os }}
     name: Build on ${{ matrix.distro }}
     steps:
