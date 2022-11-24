@@ -77,27 +77,31 @@ jobs:
     # Run steps on a matrix of 3 arch/distro combinations
     strategy:
       matrix:
-        # Use these Java versions
-        java: [
-          17    # Minimum supported
-        ]
         include:
           - arch: aarch64
             distro: ubuntu20.04
+            java: 17
           - arch: ppc64le
             distro: ubuntu20.04
+            java: 17
           - arch: armv7
             distro: ubuntu20.04
+            java: 17
           - arch: s390x
             distro: ubuntu20.04
+            java: 17
           - arch: aarch64
             distro: fedora_latest
+            java: 17
           - arch: ppc64le
             distro: fedora_latest
+            java: 17
           - arch: armv7
             distro: fedora_latest
+            java: 17
           - arch: s390x
             distro: fedora_latest
+            java: 17
 
     steps:
       - uses: actions/checkout@v2.1.0
