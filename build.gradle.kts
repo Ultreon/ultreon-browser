@@ -148,8 +148,9 @@ tasks.jpackage {
 
     javaOptions = listOf("-Dfile.encoding=UTF-8")
 
+    aboutUrl = "https://github.com/Ultreon/ultreon-browser"
+
     mac {
-        aboutUrl = "https://github.com/Ultreon/ultreon-browser"
         icon = "icons/icon.icns"
         macPackageIdentifier = "com.ultreon.browser"
         macPackageName = "ultreon-browser"
@@ -167,7 +168,6 @@ tasks.jpackage {
     }
 
     windows {
-        aboutUrl = "https://github.com/Ultreon/ultreon-browser"
         icon = "icons/icon.ico"
         winMenu = true
         winDirChooser = true
@@ -199,11 +199,11 @@ task("jpackageAlt", JPackageTask::class) {
     destination = "$buildDir/dist"
 
     licenseFile = "$projectDir/package/LICENSE.txt"
-    aboutUrl = "https://github.com/Ultreon/ultreon-browser"
 
     javaOptions = listOf("-Dfile.encoding=UTF-8")
 
     mac {
+        aboutUrl = "https://github.com/Ultreon/ultreon-browser"
         icon = "icons/icon.icns"
         macPackageIdentifier = "com.ultreon.browser"
         macPackageName = "ultreon-browser"
@@ -223,6 +223,7 @@ task("jpackageAlt", JPackageTask::class) {
     }
 
     windows {
+        aboutUrl = "https://github.com/Ultreon/ultreon-browser"
         icon = "icons/icon.ico"
         winMenu = true
         winDirChooser = true
