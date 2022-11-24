@@ -160,7 +160,7 @@ jobs:
       - name: capture the build artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: Ultreon Browser Linux for ${{ matrix.arch }} Build ${{ github.run_number }}
+          name: Ultreon Browser Linux on ${{ matrix.arch }} Build ${{ github.run_number }}
           path: build/dist/
   build-macos:
     strategy:
