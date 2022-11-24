@@ -1,16 +1,20 @@
 package com.ultreon.browser.main
 
+import com.ultreon.browser.LOADING_ICON
 import com.ultreon.browser.useOSR
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
 import java.awt.CardLayout
 import java.awt.Component
+import java.awt.Image
 import java.awt.KeyboardFocusManager
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import javax.swing.ImageIcon
+import javax.swing.JLabel
 import javax.swing.JPanel
 
-class BrowserTab(val tabs: BrowserTabs, client: CefClient, main: UltreonBrowser, val url: String) : JPanel(CardLayout()) {
+class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, main: UltreonBrowser, val url: String) : JPanel(CardLayout()) {
     private val browserUI: Component
     val browser: CefBrowser
 
@@ -51,5 +55,19 @@ class BrowserTab(val tabs: BrowserTabs, client: CefClient, main: UltreonBrowser,
 
     fun goBack() {
         browser.goBack()
+    }
+
+    fun updateIcon(image: Image) {
+        icon.icon = ImageIcon(image)
+    }
+
+    fun loadStart() {
+        icon.icon = ImageIcon(LOADING_ICON)
+        icon.isVisible = true
+    }
+
+    fun loadEnd() {
+        icon.icon = null
+        icon.isVisible = false
     }
 }

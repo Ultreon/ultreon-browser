@@ -12,17 +12,20 @@ import org.cef.CefClient
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.browser.CefMessageRouter
-import org.cef.handler.CefDisplayHandlerAdapter
-import org.cef.handler.CefFocusHandlerAdapter
-import org.cef.handler.CefRequestHandlerAdapter
+import org.cef.handler.*
+import org.cef.misc.BoolRef
+import org.cef.network.CefRequest
+import org.cef.network.CefResponse
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.GraphicsEnvironment
 import java.awt.KeyboardFocusManager
 import java.awt.event.*
 import java.io.File
+import java.net.URL
 import javax.imageio.ImageIO
 import javax.swing.*
+import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
 
@@ -98,7 +101,7 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
         builder.setProgressHandler(ConsoleProgressHandler()) //Default
         builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
         builder.cefSettings.cache_path = dataDir.toString()
-        builder.cefSettings.user_agent_product = "UltreonBrowser/1.0.0"
+        builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION Chrome/$CHROME_VERSION"
         builder.addJcefArgs(*argv)
 
         //Build a CefApp instance using the configuration above
@@ -118,13 +121,6 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
         toolBar = createToolbar()
         tabs = BrowserTabs(client, this)
 
-        addWindowListener(object : WindowAdapter() {
-            override fun windowClosing(e: WindowEvent) {
-                CefApp.getInstance().dispose()
-                dispose()
-            }
-        })
-
         pane.add(tabs, BorderLayout.CENTER)
         pane.add(toolBar, BorderLayout.NORTH)
 
@@ -134,24 +130,24 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
     private fun createToolbar(): JToolBar {
         val toolBar = JToolBar()
         prevBtn = JButton("  ◀  ").also {
-            it.addActionListener { _ -> tabs.selected.goBack()}
+            it.addActionListener { tabs.selected.goBack()}
             toolBar.add(it)
         }
         nextBtn = JButton("  ▶  ").also {
-            it.addActionListener { _ -> tabs.selected.goForward()}
+            it.addActionListener { tabs.selected.goForward()}
             toolBar.add(it)
         }
         address = JTextField().also {
             it.addActionListener { _ -> tabs.selected.goTo(it.text) }
             toolBar.add(it)
         }
-        searchBtn = JButton("  🔍  ").also {
+        searchBtn = JButton("  🔎  ").also {
             it.addActionListener { _ -> tabs.selected.goTo(it.text) }
             toolBar.add(it)
         }
 
         searchBtn = JButton("  ➕  ").also {
-            it.addActionListener { _ -> tabs.createTab("https://google.com") }
+            it.addActionListener { tabs.createTab("https://google.com") }
             toolBar.add(it)
         }
 
@@ -180,6 +176,18 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
         })
 
         // Update the address field when the browser URL changes.
+        client.addLoadHandler(object : CefLoadHandlerAdapter() {
+            override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+                tabs.onLoadEnd(browser)
+            }
+
+            override fun onLoadStart(
+                browser: CefBrowser, frame: CefFrame, transitionType: CefRequest.TransitionType) {
+                tabs.onLoadStart(browser)
+            }
+        })
+
+        // Update the address field when the browser URL changes.
         client.addRequestHandler(object : CefRequestHandlerAdapter() {
             override fun onOpenURLFromTab(
                 browser: CefBrowser,
@@ -189,6 +197,26 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
             ): Boolean {
                 tabs.createTab(target_url)
                 return true
+            }
+
+            override fun getResourceRequestHandler(
+                browser: CefBrowser?,
+                frame: CefFrame?,
+                request: CefRequest?,
+                isNavigation: Boolean,
+                isDownload: Boolean,
+                requestInitiator: String?,
+                disableDefaultHandling: BoolRef?
+            ): CefResourceRequestHandler {
+                return IconResourceHandler(
+                    browser,
+                    frame,
+                    request,
+                    isNavigation,
+                    isDownload,
+                    requestInitiator,
+                    disableDefaultHandling
+                )
             }
         })
 
@@ -324,6 +352,38 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
 
             //Display the window.
             frame.isVisible = true
+        }
+    }
+
+    @Suppress("unused")
+    inner class IconResourceHandler(
+        val browser: CefBrowser?,
+        val frame: CefFrame?,
+        val request: CefRequest?,
+        val isNavigation: Boolean,
+        val isDownload: Boolean,
+        val requestInitiator: String?,
+        val disableDefaultHandling: BoolRef?
+    ) : CefResourceRequestHandlerAdapter() {
+        override fun onResourceResponse(
+            browser: CefBrowser,
+            frame: CefFrame,
+            request: CefRequest,
+            response: CefResponse
+        ): Boolean {
+            if (request.resourceType == CefRequest.ResourceType.RT_FAVICON) {
+                val url = request.url
+                if (url.startsWith("https://")) {
+                    val url1 = URL(url)
+                    thread {
+                        val image = ImageIO.read(url1)
+                        SwingUtilities.invokeLater {
+                            tabs.onIconChange(browser, image)
+                        }
+                    }
+                }
+            }
+            return false
         }
     }
 }

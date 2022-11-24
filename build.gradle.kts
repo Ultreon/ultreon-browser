@@ -20,6 +20,7 @@ val appName = property("app_name")
 
 // Dependency versions
 val flatlafVersion = "2.6"
+val chromeVersion = "107.1.9"
 
 group = "com.ultreon"
 version = "${projectVersion}-${if (System.getenv("GITHUB_BUILD_NUMBER") == null) "local" else System.getenv("GITHUB_BUILD_NUMBER")}"
@@ -54,7 +55,7 @@ dependencies {
     testImplementation(kotlin("test"))
     implementation("org.bidib.org.oxbow:swingbits:1.2.2")
     implementation("org.jetbrains:annotations:23.0.0")
-    implementation("me.friwi:jcefmaven:107.1.9")
+    implementation("me.friwi:jcefmaven:$chromeVersion")
 }
 
 tasks.jar {
@@ -92,6 +93,7 @@ tasks.processResources {
     inputs.property("app_name", appName)
     inputs.property("version", getViewVersion())
     inputs.property("build_date", buildDate.format(DateTimeFormatter.RFC_1123_DATE_TIME))
+    inputs.property("chrome_version", chromeVersion)
 
     filesMatching(listOf("docs/**.html", "product.json")) {
         expand(
@@ -99,7 +101,8 @@ tasks.processResources {
             "project_name" to projectName,
             "app_name" to appName,
             "version" to getViewVersion(),
-            "build_date" to buildDate.format(DateTimeFormatter.RFC_1123_DATE_TIME)
+            "build_date" to buildDate.format(DateTimeFormatter.RFC_1123_DATE_TIME),
+            "chrome_version" to chromeVersion
         )
     }
 }

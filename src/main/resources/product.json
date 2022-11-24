@@ -2,5 +2,6 @@
   "id": "${project_id}",
   "name": "${app_name}",
   "version": "${version}",
-  "build-date": "${build_date}"
+  "build-date": "${build_date}",
+  "chrome-version": "${chrome_version}"
 }

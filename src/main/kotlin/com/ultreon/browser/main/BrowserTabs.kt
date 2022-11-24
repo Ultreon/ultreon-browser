@@ -1,18 +1,14 @@
 package com.ultreon.browser.main
 
+import com.ultreon.browser.LOADING_ICON
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
-import java.awt.Font
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JButton
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JTabbedPane
+import javax.swing.*
 
 
 class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane(TOP) {
@@ -29,12 +25,19 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
     }
 
     fun createTab(url: String, background: Boolean = false) {
-        val browserTab = BrowserTab(this, client, main, url)
+        val icon = JLabel(ImageIcon(LOADING_ICON))
+
+        icon.maximumSize = Dimension(16, 16)
+        icon.size = Dimension(16, 16)
+        icon.preferredSize = Dimension(16, 16)
+        icon.minimumSize = Dimension(16, 16)
+        val browserTab = BrowserTab(this, icon, client, main, url)
         tabs += browserTab
         browsers[browserTab.browser] = browserTab
         this.addTab(url, browserTab)
         val index: Int = this.indexOfTab(url)
         val pnlTab = JPanel(GridBagLayout())
+        pnlTab.maximumSize.height = 16
         pnlTab.isOpaque = false
         val lblTitle = JLabel(url)
         val btnClose = JButton("❌")
@@ -44,11 +47,18 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
         val gbc = GridBagConstraints()
         gbc.gridx = 0
         gbc.gridy = 0
+        gbc.ipadx = 20
+        gbc.weightx = 0.0
+        pnlTab.add(icon, gbc)
+
+        gbc.gridx++
+        gbc.ipadx = 10
         gbc.weightx = 1.0
 
         pnlTab.add(lblTitle, gbc)
 
         gbc.gridx++
+        gbc.ipadx = 0
         gbc.weightx = 0.0
         pnlTab.add(btnClose, gbc)
 
@@ -75,9 +85,28 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
         browserTab.browser.close(true)
     }
 
-    fun onTitleChange(browser: CefBrowser, title: String?) {
+    fun onIconChange(browser: CefBrowser, image: Image): Boolean {
         val browserTab = browsers[browser]
-        browserTab?.updateTitle(title) ?: throw IllegalArgumentException("Browser tab not found: ${browser.identifier}")
+        browserTab?.updateIcon(image) ?: return false
+        return true
+    }
+
+    fun onLoadStart(browser: CefBrowser?): Boolean {
+        val browserTab = browsers[browser]
+        browserTab?.loadStart() ?: return false
+        return true
+    }
+
+    fun onLoadEnd(browser: CefBrowser?): Boolean {
+        val browserTab = browsers[browser]
+        browserTab?.loadEnd() ?: return false
+        return true
+    }
+
+    fun onTitleChange(browser: CefBrowser, title: String?): Boolean {
+        val browserTab = browsers[browser]
+        browserTab?.updateTitle(title) ?: return false
+        return true
     }
 
     fun indexOfTab(browserTab: BrowserTab): Int {
