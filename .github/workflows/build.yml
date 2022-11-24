@@ -13,8 +13,8 @@ jobs:
         include:
           - os: ubuntu:20.04
             java: 17
-          - os: fedora:37
-            java: 17
+#          - os: fedora:37
+#            java: 17
     runs-on: ubuntu-latest
     container: ${{ matrix.os }}
     name: Build on ${{ matrix.os }} for x86-64
@@ -30,7 +30,7 @@ jobs:
       - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: Build artifact
-        run: ./gradlew jpackage --info
+        run: ./gradlew jpackage jpackageAlt --info
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
       - name: Capture the build artifacts
@@ -50,9 +50,9 @@ jobs:
           - arch: armv7
             distro: ubuntu20.04
             java: 17
-          - arch: armv7
-            distro: fedora_latest
-            java: 17
+#          - arch: armv7
+#            distro: fedora_latest
+#            java: 17
 
     steps:
       - uses: actions/checkout@v2.1.0
@@ -115,7 +115,7 @@ jobs:
             esac
 
           # Produce a binary artifact and place it in the mounted volume
-          run: ./gradlew jpackage --info
+          run: ./gradlew jpackage jpackageAlt --info
       - name: capture the build artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -144,7 +144,7 @@ jobs:
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: build
-        run: ./gradlew jpackage --info
+        run: ./gradlew jpackage jpackageAlt --info
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
       - name: capture the build artifacts
@@ -173,7 +173,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: build
-        run: cmd /c "gradlew.bat jpackage --info"
+        run: cmd /c "gradlew.bat jpackage jpackageAlt --info"
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
       - name: capture the build artifacts

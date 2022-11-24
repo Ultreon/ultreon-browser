@@ -1,6 +1,8 @@
 @file:Suppress("SpellCheckingInspection")
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.panteleyev.jpackage.ImageType
+import org.panteleyev.jpackage.JPackageTask
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -175,5 +177,61 @@ tasks.jpackage {
         winUpgradeUuid = "340c6842-b3bb-4173-bc87-c7c831cd1605"
         winMenuGroup = "Ultreon Team"
         appVersion = (getViewVersion() as String).replace("+local", ".0").replace("+", ".")
+    }
+}
+
+task("jpackageAlt", JPackageTask::class) {
+    dependsOn("build", "copyDependencies", "copyJar")
+
+    input  = "$buildDir/jars"
+    destination = "$buildDir/dist"
+
+    appName = "Ultreon Browser"
+    appVersion = project.version.toString()
+    vendor = "Ultreon Team"
+    copyright = "Copyright (c) 2022 Ultreon Team"
+    runtimeImage = System.getProperty("java.home")
+
+    mainJar = tasks.jar.get().archiveFileName.get()
+    mainClass = "com.ultreon.browser.MainKt"
+
+    destination = "$buildDir/dist"
+
+    licenseFile = "$projectDir/package/LICENSE.txt"
+    aboutUrl = "https://github.com/Ultreon/ultreon-browser"
+
+    javaOptions = listOf("-Dfile.encoding=UTF-8")
+
+    mac {
+        icon = "icons/icon.icns"
+        macPackageIdentifier = "com.ultreon.browser"
+        macPackageName = "ultreon-browser"
+        appVersion = packageVersion.replace(Regex("(\\d+\\.\\d+\\.\\d+).*"), "$1")
+        type = ImageType.PKG
+    }
+
+    linux {
+        icon = "icons/icon.png"
+        linuxPackageName = "ultreon-browser"
+        linuxDebMaintainer = "Ultreon Team"
+        linuxRpmLicenseType = "Ultreon API License v1.1"
+        linuxAppRelease = "2"
+        linuxShortcut = true
+        appVersion = project.version.toString()
+        type = ImageType.APP_IMAGE
+    }
+
+    windows {
+        icon = "icons/icon.ico"
+        winMenu = true
+        winDirChooser = true
+        winConsole = false
+        winPerUserInstall = true
+        winShortcutPrompt = true
+        winShortcut = false
+        winUpgradeUuid = "340c6842-b3bb-4173-bc87-c7c831cd1605"
+        winMenuGroup = "Ultreon Team"
+        appVersion = (getViewVersion() as String).replace("+local", ".0").replace("+", ".")
+        type = ImageType.MSI
     }
 }
