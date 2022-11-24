@@ -7,9 +7,7 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JButton
 import javax.swing.JDialog
-import javax.swing.JFrame
 import javax.swing.JProgressBar
-import javax.swing.SwingUtilities
 
 class ProgressDialog(parent: Window?, title: String?) : JDialog(parent, title) {
     var message: String = "..."

@@ -2,11 +2,9 @@ package com.ultreon.browser.main
 
 import com.ultreon.browser.*
 import com.ultreon.browser.dialog.AboutDialog
-import com.ultreon.browser.dialog.ProgressDialog
 import com.ultreon.browser.dialog.settings.SettingsDialog
 import com.ultreon.browser.intellijthemes.IJThemesPanel
 import me.friwi.jcefmaven.CefAppBuilder
-import me.friwi.jcefmaven.IProgressHandler
 import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
 import me.friwi.jcefmaven.impl.progress.ConsoleProgressHandler
 import org.cef.CefApp
@@ -18,7 +16,6 @@ import org.cef.handler.*
 import org.cef.misc.BoolRef
 import org.cef.network.CefRequest
 import org.cef.network.CefResponse
-import org.oxbow.swingbits.dialog.task.TaskDialog
 import java.awt.*
 import java.awt.event.*
 import java.io.File
@@ -27,7 +24,6 @@ import javax.imageio.ImageIO
 import javax.swing.*
 import kotlin.concurrent.thread
 import kotlin.system.exitProcess
-import me.friwi.jcefmaven.EnumProgress as SetupStage
 
 
 /*
