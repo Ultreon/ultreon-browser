@@ -13,7 +13,7 @@ jobs:
         include:
           - os: ubuntu-20.04
             java: 17
-          - os: fedora-37
+          - os: fcos
             java: 17
     runs-on: ${{ matrix.os }}
     name: Build on ${{ matrix.os }} for x86-64
