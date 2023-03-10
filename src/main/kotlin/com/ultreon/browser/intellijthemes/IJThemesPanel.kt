@@ -25,6 +25,8 @@ import com.formdev.flatlaf.*
 import com.formdev.flatlaf.IntelliJTheme.ThemeLaf
 import com.formdev.flatlaf.extras.FlatAnimatedLafChange
 import com.formdev.flatlaf.extras.FlatSVGIcon
+import com.formdev.flatlaf.themes.FlatMacDarkLaf
+import com.formdev.flatlaf.themes.FlatMacLightLaf
 import com.formdev.flatlaf.util.LoggingFacade
 import com.formdev.flatlaf.util.StringUtils
 import com.ultreon.browser.main.AppPrefs
@@ -142,6 +144,34 @@ class IJThemesPanel : JPanel() {
                 null,
                 null,
                 FlatDarculaLaf::class.java.name
+            )
+        )
+
+        if (showLight) themes.add(
+            IJThemeInfo(
+                "FlatLaf macOS Light",
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                FlatMacLightLaf::class.java.name
+            )
+        )
+
+        if (showDark) themes.add(
+            IJThemeInfo(
+                "FlatLaf macOS Dark",
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                FlatMacDarkLaf::class.java.name
             )
         )
 

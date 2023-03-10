@@ -19,8 +19,8 @@ val projectVersion = property("project_version")
 val appName = property("app_name")
 
 // Dependency versions
-val flatlafVersion = "2.6"
-val chromeVersion = "107.1.9"
+val flatlafVersion = property("flatlaf_version")
+val chromeVersion = "110.0.25"
 
 group = "com.ultreon"
 version = "${projectVersion}-${if (System.getenv("GITHUB_BUILD_NUMBER") == null) "local" else System.getenv("GITHUB_BUILD_NUMBER")}"
@@ -52,8 +52,8 @@ dependencies {
     implementation("org.drjekyll:fontchooser:2.5.2")
     implementation("com.google.code.gson:gson:2.10")
     implementation("com.miglayout:miglayout-swing:11.0")
-    testImplementation(kotlin("test"))
     implementation("org.bidib.org.oxbow:swingbits:1.2.2")
+    testImplementation(kotlin("test"))
     implementation("org.jetbrains:annotations:23.0.0")
     implementation("me.friwi:jcefmaven:$chromeVersion")
 }
@@ -136,7 +136,7 @@ tasks.jpackage {
     input  = "$buildDir/jars"
     destination = "$buildDir/dist"
 
-    appName = "Ultreon Browser"
+    appName = project.property("app_name").toString()
     appVersion = project.version.toString()
     vendor = "Ultreon Team"
     copyright = "Copyright (c) 2022 Ultreon Team"
@@ -190,7 +190,7 @@ task("jpackageAlt", JPackageTask::class) {
     input  = "$buildDir/jars"
     destination = "$buildDir/dist"
 
-    appName = "Ultreon Browser"
+    appName = project.property("app_name").toString()
     appVersion = project.version.toString()
     vendor = "Ultreon Team"
     copyright = "Copyright (c) 2022 Ultreon Team"

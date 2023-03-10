@@ -1,9 +1,9 @@
 package com.ultreon.browser.main
 
 import com.formdev.flatlaf.FlatLaf
-import com.formdev.flatlaf.FlatLightLaf
 import com.formdev.flatlaf.FlatPropertiesLaf
 import com.formdev.flatlaf.IntelliJTheme
+import com.formdev.flatlaf.themes.FlatMacDarkLaf
 import com.formdev.flatlaf.util.LoggingFacade
 import com.formdev.flatlaf.util.StringUtils
 import com.ultreon.browser.APP_ID
@@ -34,7 +34,7 @@ object AppPrefs {
         // set look and feel
         try {
             if (args.isNotEmpty()) UIManager.setLookAndFeel(args[0]) else {
-                val lafClassName = state[KEY_LAF, FlatLightLaf::class.java.name]
+                val lafClassName = state[KEY_LAF, FlatMacDarkLaf::class.java.name]
                 if (IntelliJTheme.ThemeLaf::class.java.name == lafClassName) {
                     val theme = state[KEY_LAF_THEME, ""]
                     if (theme.startsWith(RESOURCE_PREFIX)) IntelliJTheme.setup(
@@ -51,7 +51,7 @@ object AppPrefs {
                                 )
                             )
                         )
-                    ) else FlatLightLaf.setup()
+                    ) else FlatMacDarkLaf.setup()
                     if (theme.isNotEmpty()) UIManager.getLookAndFeelDefaults()[THEME_UI_KEY] = theme
                 } else if (FlatPropertiesLaf::class.java.name == lafClassName) {
                     val theme = state[KEY_LAF_THEME, ""]
@@ -59,7 +59,7 @@ object AppPrefs {
                         val themeFile = File(theme.substring(FILE_PREFIX.length))
                         val themeName = StringUtils.removeTrailing(themeFile.name, ".properties")
                         FlatLaf.setup(FlatPropertiesLaf(themeName, themeFile))
-                    } else FlatLightLaf.setup()
+                    } else FlatMacDarkLaf.setup()
                     if (theme.isNotEmpty()) UIManager.getLookAndFeelDefaults()[THEME_UI_KEY] = theme
                 } else UIManager.setLookAndFeel(lafClassName)
             }
@@ -67,7 +67,7 @@ object AppPrefs {
             LoggingFacade.INSTANCE.logSevere(null, ex)
 
             // fallback
-            FlatLightLaf.setup()
+            FlatMacDarkLaf.setup()
         }
 
         // remember active look and feel

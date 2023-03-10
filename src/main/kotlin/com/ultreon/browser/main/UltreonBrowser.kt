@@ -92,7 +92,7 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
         builder.setProgressHandler(ConsoleProgressHandler()) //Default
         builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
         builder.cefSettings.cache_path = dataDir.toString()
-        builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION Chrome/$CHROME_VERSION"
+        builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION"
 
 //        val progress = ProgressDialog(null, "Setting up CEF")
 //        progress.size = Dimension(600, 450)
