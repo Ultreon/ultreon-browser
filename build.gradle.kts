@@ -7,7 +7,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 plugins {
-    kotlin("jvm") version "1.8.0"
+    kotlin("jvm") version "1.9.0"
     id("java")
     id("org.panteleyev.jpackageplugin") version "1.5.0"
 }
