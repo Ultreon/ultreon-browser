@@ -13,6 +13,7 @@ import javax.swing.*
 
 
 class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane(TOP) {
+    private val lock: Any = Any()
     private val tabs = mutableListOf<BrowserTab>()
     private val browsers = mutableMapOf<CefBrowser, BrowserTab>()
 
@@ -22,78 +23,26 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
         }
 
     init {
+        this.tabLayoutPolicy = SCROLL_TAB_LAYOUT
         createTab("https://google.com")
     }
 
     fun createTab(url: String, background: Boolean = false) {
-        val icon = JLabel(ImageIcon(LOADING_ICON))
+        SwingUtilities.invokeLater {
+            val icon = JLabel(ImageIcon(LOADING_ICON))
 
-        icon.maximumSize = Dimension(16, 16)
-        icon.size = Dimension(16, 16)
-        icon.preferredSize = Dimension(16, 16)
-        icon.minimumSize = Dimension(16, 16)
-        val browserTab = BrowserTab(this, icon, client, main, url)
-        tabs += browserTab
-        browsers[browserTab.browser] = browserTab
-        this.addTab(url, browserTab)
-        val index: Int = this.indexOfTab(url)
-        val pnlTab = JPanel(GridBagLayout())
-        pnlTab.maximumSize.height = 16
-        pnlTab.isOpaque = false
-        val lblTitle = JLabel(url)
-        val btnClose = JButton("❌")
-        btnClose.font = Font(null, Font.PLAIN, 8)
-        btnClose.putClientProperty( "JButton.buttonType", "roundRect" )
+            icon.maximumSize = Dimension(16, 16)
+            icon.size = Dimension(16, 16)
+            icon.preferredSize = Dimension(16, 16)
+            icon.minimumSize = Dimension(16, 16)
+            val browserTab = BrowserTab(this, icon, client, main, url, background)
 
-        val gbc = GridBagConstraints()
-        gbc.gridx = 0
-        gbc.gridy = 0
-        gbc.ipadx = 20
-        gbc.weightx = 0.0
-        pnlTab.add(icon, gbc)
+            tabs += browserTab
+            browsers[browserTab.browser] = browserTab
 
-        gbc.gridx++
-        gbc.ipadx = 10
-        gbc.weightx = 1.0
+            this.addTab(url, browserTab)
 
-        pnlTab.add(lblTitle, gbc)
-
-        gbc.gridx++
-        gbc.ipadx = 0
-        gbc.weightx = 0.0
-        pnlTab.add(btnClose, gbc)
-
-        pnlTab.addMouseListener(object : MouseAdapter() {
-            override fun mouseClicked(e: MouseEvent) {
-                if (e.button == 2) {
-                    removeTabAt(indexOfTab(browserTab))
-                }
-                if (e.button == 1) {
-                    println("LEFT CLICK :: COUNT ${e.clickCount}")
-                    if (e.clickCount == 20) {
-                        try {
-                            val place = URL(browserTab.browser.url)
-                            println(place.host)
-                            if (place.host == "youtube.com" || place.host.endsWith(".youtube.com")) {
-                                println("YouTube")
-                                browserTab.goTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-                            } else {
-                                println("Not YouTube")
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-                }
-            }
-        })
-
-        this.setTabComponentAt(index, pnlTab)
-
-        btnClose.addActionListener(CloseButtonHandler())
-
-        if (!background) {
-            selectedIndex = indexOfTab(browserTab)
+            browserTab.attach()
         }
     }
 
@@ -123,7 +72,10 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
 
     fun onTitleChange(browser: CefBrowser, title: String?): Boolean {
         val browserTab = browsers[browser]
-        browserTab?.updateTitle(title) ?: return false
+        browserTab?.updateTitle(title) ?: run {
+            browser.close(true)
+            return false
+        }
         return true
     }
 
@@ -133,13 +85,6 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
 
     inner class CloseButtonHandler : ActionListener {
         override fun actionPerformed(evt: ActionEvent) {
-            val selected: Int = this@BrowserTabs.selectedIndex
-            if (selected >= 0) {
-                this@BrowserTabs.removeTabAt(selected)
-                // It would probably be worthwhile getting the source
-                // casting it back to a JButton and removing
-                // the action handler reference ;)
-            }
         }
     }
 }
