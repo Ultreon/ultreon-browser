@@ -19,21 +19,24 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
     private val browserUI: Component
     val browser: CefBrowser = client.createBrowser(url, useOSR, true)
 
+    private val focusAdapter = object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent) {
+            if (main.browserFocus) return
+            main.browserFocus = true
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
+            browser.setFocus(true)
+        }
+
+        override fun focusLost(e: FocusEvent) {
+            main.browserFocus = false
+            browser.setFocus(false)
+        }
+    }
+
     init {
         browserUI = browser.uiComponent
 
-        this.addFocusListener(object : FocusAdapter() {
-            override fun focusGained(e: FocusEvent) {
-                if (main.browserFocus) return
-                main.browserFocus = true
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
-                browser.setFocus(true)
-            }
-            override fun focusLost(e: FocusEvent) {
-                main.browserFocus = false
-                browser.setFocus(false)
-            }
-        })
+        main.addFocusListener(focusAdapter)
 
         this.pnlTab = JPanel(GridBagLayout())
         this.pnlTab.maximumSize.height = 16

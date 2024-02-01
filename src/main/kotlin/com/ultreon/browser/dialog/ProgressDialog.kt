@@ -1,10 +1,12 @@
 package com.ultreon.browser.dialog
 
+import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.FlowLayout
 import java.awt.Window
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JDialog
 import javax.swing.JProgressBar
@@ -24,12 +26,12 @@ class ProgressDialog(parent: Window?, title: String?) : JDialog(parent, title) {
         progressBar.isStringPainted = true
         progressBar.maximum = 10000
         progressBar.string = "Retrieving messages"
-        layout = FlowLayout()
+        layout = BorderLayout()
         val size = cancelButton.preferredSize
         size.width = 400
         progressBar.preferredSize = size
-        add(progressBar)
-        add(cancelButton)
+        add(progressBar, BorderLayout.CENTER)
+        add(cancelButton, BorderLayout.SOUTH)
         cancelButton.addActionListener {
             if (listener != null) {
                 listener!!.progressDialogCancelled()
@@ -51,14 +53,15 @@ class ProgressDialog(parent: Window?, title: String?) : JDialog(parent, title) {
         this.listener = listener
     }
 
-    fun setMaximum(value: Int) {
-        progressBar.maximum = value
-    }
-
     fun setValue(value: Float) {
         val progress = (100 * value).toInt()
-        progressBar.string = String.format("%s\n%d%% complete", message, progress)
-        progressBar.value = (10000 * value).toInt()
+        if (progress in 0..100) {
+            progressBar.string = String.format("%s\n%d%% complete", message, progress)
+        } else {
+            progressBar.string = message
+        }
+        progressBar.value = (100 * value).toInt()
+        progressBar.maximum = 100
     }
 
     override fun setVisible(visible: Boolean) {

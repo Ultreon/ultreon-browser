@@ -12,23 +12,25 @@ import java.net.URL
 
 val osName: String = getProperty("os.name")
 private val gson = Gson()
-private val productJson = gson.fromJson(ProductJson::class.java.getResourceAsStream("/product.json")!!.bufferedReader(), ProductJson::class.java)
+private val productJson = gson.fromJson(
+    ProductJson::class.java.getResourceAsStream("/product.json")!!.bufferedReader(),
+    ProductJson::class.java
+)
 
-val appData: File
-    get() {
-        when {
-            isWindows() -> {
-                return File(getenv("APPDATA").toString())
-            }
-            isLinux() -> {
-                return File("~/.config/")
-            }
-            isMacintosh() -> {
-                return File("~/Library/Applications Support")
-            }
-        }
-        throw UnsupportedOperationException("Unsupported operating system: $osName")
-    }
+val appData: File = when {
+    isWindows() -> File(getenv("APPDATA").toString())
+    isLinux() -> File("~/.config/")
+    isMacintosh() -> File("~/Library/Applications Support")
+    else -> throw UnsupportedOperationException("Unsupported operating system: $osName")
+}
+
+val homeDir: File = when {
+    isWindows() -> File(getProperty("user.home").toString())
+    isLinux() -> File("~/")
+    isMacintosh() -> File("~/")
+    else -> File(getProperty("user.home").toString())
+}
+
 
 const val useOSR = false
 
@@ -39,6 +41,7 @@ const val APP_BANNER: String = "/images/banner.png"
 const val LOADING_ICON_PATH: String = "/icons/loading.gif"
 
 val LOADING_ICON_REF: URL = ProductJson::class.java.getResource(LOADING_ICON_PATH)!!
+
 // Resource references
 val APP_ICON_REF: URL = ProductJson::class.java.getResource(APP_ICON)!!
 val APP_BANNER_REF: URL = ProductJson::class.java.getResource(APP_BANNER)!!

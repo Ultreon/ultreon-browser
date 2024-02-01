@@ -4,14 +4,14 @@ import com.ultreon.browser.*
 import com.ultreon.browser.dialog.AboutDialog
 import com.ultreon.browser.dialog.settings.SettingsDialog
 import com.ultreon.browser.intellijthemes.IJThemesPanel
-import me.friwi.jcefmaven.CefAppBuilder
-import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
-import me.friwi.jcefmaven.impl.progress.ConsoleProgressHandler
 import org.cef.CefApp
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.browser.CefMessageRouter
+import org.cef.callback.CefBeforeDownloadCallback
+import org.cef.callback.CefDownloadItem
+import org.cef.callback.CefDownloadItemCallback
 import org.cef.handler.*
 import org.cef.misc.BoolRef
 import org.cef.network.CefRequest
@@ -24,16 +24,20 @@ import javax.imageio.ImageIO
 import javax.swing.*
 import kotlin.concurrent.thread
 import kotlin.system.exitProcess
+import java.net.URLDecoder.decode as decodeUrl
 
+
+val dataDir: File = File(appData, "UltreonBrowser")
+
+private val invalidNameRegex = Regex("(con|prn|aux|nul|com\\d|lpt\\d|\r?\n|\\\\)")
 
 /*
  * InternalFrameDemo.java requires:
  *   MyInternalFrame.java
  */
-class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
-    private val dataDir: File = File(appData, "UltreonBrowser")
+class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
+    private val downloadsDir: File = File(homeDir, "Downloads")
     internal var browserFocus: Boolean = false
-    private lateinit var app: CefApp
     private lateinit var client: CefClient
     private lateinit var tabs: BrowserTabs
     private lateinit var toolBar: JToolBar
@@ -73,53 +77,12 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
     private fun createContentPane(): Container {
         val pane = JPanel(BorderLayout())
 
-        //Create a new CefAppBuilder instance
-        val builder = CefAppBuilder()
+        create(pane)
 
-        builder.cefSettings.windowless_rendering_enabled = useOSR
+        return pane
+    }
 
-        // USE builder.setAppHandler INSTEAD OF CefApp.addAppHandler!
-        // Fixes compatibility issues with MacOSX
-        builder.setAppHandler(object : MavenCefAppHandlerAdapter() {
-            override fun stateHasChanged(state: CefApp.CefAppState) {
-                // Shutdown the app if the native CEF part is terminated
-                if (state == CefApp.CefAppState.TERMINATED) exitProcess(0)
-            }
-        })
-
-        //Configure the builder instance
-        builder.setInstallDir(File("cef")) //Default
-        builder.setProgressHandler(ConsoleProgressHandler()) //Default
-        builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
-        builder.cefSettings.cache_path = dataDir.toString()
-        builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION"
-
-//        val progress = ProgressDialog(null, "Setting up CEF")
-//        progress.size = Dimension(600, 450)
-//        progress.pack()
-//        progress.show()
-//        builder.setProgressHandler { stage: SetupStage, fl: Float ->
-//            progress.message = when (stage) {
-//                SetupStage.INSTALL -> "Installing CEF..."
-//                SetupStage.DOWNLOADING -> "Downloading files..."
-//                SetupStage.EXTRACTING -> "Extracting files..."
-//                SetupStage.LOCATING -> "Locating CEF..."
-//                SetupStage.INITIALIZING -> "Initializing..."
-//                SetupStage.INITIALIZED -> "Ready"
-//            }
-//
-//            if (stage == SetupStage.INITIALIZED) {
-//                println("Stop")
-//            }
-//
-//            progress.setValue(fl)
-//            progress.revalidate()
-//        }
-
-        builder.addJcefArgs(*argv)
-
-        //Build a CefApp instance using the configuration above
-        app = builder.build()
+    private fun create(pane: JPanel) {
         client = app.createClient()
 
         addWindowListener(object : WindowAdapter() {
@@ -137,8 +100,6 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
 
         pane.add(tabs, BorderLayout.CENTER)
         pane.add(toolBar, BorderLayout.NORTH)
-
-        return pane
     }
 
     private fun createToolbar(): JToolBar {
@@ -157,6 +118,12 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
         }
         searchBtn = JButton("  🔎  ").also {
             it.addActionListener { _ -> tabs.selected.goTo(it.text) }
+            toolBar.add(it)
+        }
+        searchBtn = JButton("  📥  ").also {
+            it.addActionListener { _ ->
+                DownloadManager.isVisible = true
+            }
             toolBar.add(it)
         }
 
@@ -198,6 +165,38 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
             override fun onLoadStart(
                 browser: CefBrowser, frame: CefFrame, transitionType: CefRequest.TransitionType) {
                 tabs.onLoadStart(browser)
+            }
+        })
+        client.addJSDialogHandler(UBrowserJSDialogHandler(this))
+
+        client.addDownloadHandler(object : CefDownloadHandlerAdapter() {
+            override fun onBeforeDownload(
+                browser: CefBrowser?,
+                downloadItem: CefDownloadItem?,
+                suggestedName: String?,
+                callback: CefBeforeDownloadCallback
+            ) {
+                SwingUtilities.invokeLater {
+                    val result = JOptionPane.showConfirmDialog(
+                        this@UltreonBrowser.tabs,
+                        "Are you sure you want to download the following file?\n\n$suggestedName",
+                        "Attempting to download: $suggestedName",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE
+                    )
+
+                    if (result == JOptionPane.YES_OPTION)
+                        this@UltreonBrowser.downloadItem(downloadItem, callback, suggestedName ?: "file")
+                    else callback.Continue(null, false)
+                }
+            }
+
+            override fun onDownloadUpdated(
+                browser: CefBrowser,
+                downloadItem: CefDownloadItem,
+                callback: CefDownloadItemCallback
+            ) {
+                this@UltreonBrowser.onDownloadUpdated(browser, downloadItem, callback)
             }
         })
 
@@ -244,6 +243,58 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
         })
 
         return toolBar
+    }
+
+    private fun onDownloadUpdated(
+        browser: CefBrowser,
+        downloadItem: CefDownloadItem,
+        callback: CefDownloadItemCallback
+    ) {
+        val id = downloadItem.id
+        val fullPath = downloadItem.fullPath
+        val url = downloadItem.url
+        val totalBytes = downloadItem.totalBytes
+        val receivedBytes = downloadItem.receivedBytes
+        val percentComplete = downloadItem.percentComplete
+        val speed = downloadItem.currentSpeed
+        val endTime = downloadItem.endTime
+        val isComplete = downloadItem.isComplete
+        val isCanceled = downloadItem.isCanceled
+        val isValid = downloadItem.isValid
+
+        SwingUtilities.invokeLater {
+            DownloadManager.onUpdate(id, fullPath, url, totalBytes, receivedBytes, percentComplete, speed, endTime, isComplete, isCanceled, downloadItem.isValid, callback)
+        }
+    }
+
+    private fun downloadItem(downloadItem: CefDownloadItem?, callback: CefBeforeDownloadCallback, suggestedName: String = "file") {
+        val file = File(downloadsDir, suggestedName).let {
+            if (!downloadsDir.exists()) {
+                if (!downloadsDir.mkdirs()){
+                    JOptionPane.showMessageDialog(this, "Could not create downloads directory: $downloadsDir")
+                    return
+                }
+            }
+
+            val chooser = JFileChooser().apply {
+                fileSelectionMode = JFileChooser.FILES_ONLY
+                dialogType = JFileChooser.SAVE_DIALOG
+                dialogTitle = "Save $it"
+                selectedFile = it
+            }
+            val showDialog = chooser.showDialog(this, "Download Here")
+
+            if (showDialog != JFileChooser.APPROVE_OPTION) callback.Continue(null, false)
+
+            return@let chooser.selectedFile
+        }
+
+        callback.Continue(file.path, false)
+    }
+
+    private fun decode(last: String): String {
+        return decodeUrl(last, "UTF-8")
+            .replace(invalidNameRegex, "")
     }
 
     private fun createMenuBar(): JMenuBar {
@@ -357,12 +408,12 @@ class UltreonBrowser : JFrame("$APP_NAME - $APP_VERSION") {
          * this method should be invoked from the
          * event-dispatching thread.
          */
-        fun start() {
+        fun start(app: CefApp) {
             //Make sure we have nice window decorations.
             setDefaultLookAndFeelDecorated(true)
 
             //Create and set up the window.
-            val frame = UltreonBrowser()
+            val frame = UltreonBrowser(app)
 
             //Display the window.
             frame.isVisible = true
