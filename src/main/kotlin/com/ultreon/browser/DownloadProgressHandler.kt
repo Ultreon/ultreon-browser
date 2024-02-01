@@ -1,4 +1,4 @@
-package com.ultreon.browser.main
+package com.ultreon.browser
 
 import com.ultreon.browser.dialog.ProgressDialog
 import me.friwi.jcefmaven.EnumProgress

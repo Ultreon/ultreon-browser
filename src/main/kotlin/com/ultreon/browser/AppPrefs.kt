@@ -1,4 +1,4 @@
-package com.ultreon.browser.main
+package com.ultreon.browser
 
 import com.formdev.flatlaf.FlatLaf
 import com.formdev.flatlaf.FlatPropertiesLaf
@@ -6,7 +6,7 @@ import com.formdev.flatlaf.IntelliJTheme
 import com.formdev.flatlaf.themes.FlatMacDarkLaf
 import com.formdev.flatlaf.util.LoggingFacade
 import com.formdev.flatlaf.util.StringUtils
-import com.ultreon.browser.APP_ID
+import com.ultreon.browser.util.APP_ID
 import com.ultreon.browser.intellijthemes.IJThemesPanel
 import java.beans.PropertyChangeEvent
 import java.io.File

@@ -1,4 +1,4 @@
-package com.ultreon.browser.main
+package com.ultreon.browser
 
 import com.google.gson.annotations.SerializedName
 import org.jetbrains.annotations.ApiStatus

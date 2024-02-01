@@ -1,10 +1,10 @@
-package com.ultreon.browser
+package com.ultreon.browser.util
 
 import com.formdev.flatlaf.FlatLightLaf
-import com.ultreon.browser.main.AppPrefs
-import com.ultreon.browser.main.DownloadProgressHandler
-import com.ultreon.browser.main.UltreonBrowser
-import com.ultreon.browser.main.dataDir
+import com.ultreon.browser.AppPrefs
+import com.ultreon.browser.DownloadProgressHandler
+import com.ultreon.browser.UltreonBrowser
+import com.ultreon.browser.dataDir
 import me.friwi.jcefmaven.CefAppBuilder
 import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
 import org.cef.CefApp

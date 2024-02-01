@@ -1,5 +1,6 @@
-package com.ultreon.browser.main
+package com.ultreon.browser.handler
 
+import com.ultreon.browser.UltreonBrowser
 import org.cef.browser.CefBrowser
 import org.cef.callback.CefJSDialogCallback
 import org.cef.handler.CefJSDialogHandler
@@ -8,7 +9,7 @@ import org.cef.misc.BoolRef
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 
-class UBrowserJSDialogHandler(val ultreonBrowser: UltreonBrowser) : CefJSDialogHandlerAdapter() {
+class JSDialogHandler(val ultreonBrowser: UltreonBrowser) : CefJSDialogHandlerAdapter() {
     override fun onJSDialog(
         browser: CefBrowser?,
         originUrl: String?,

@@ -1,4 +1,4 @@
-package com.ultreon.browser
+package com.ultreon.browser.util
 
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction

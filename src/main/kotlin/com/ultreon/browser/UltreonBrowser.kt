@@ -1,35 +1,31 @@
-package com.ultreon.browser.main
+package com.ultreon.browser
 
-import com.ultreon.browser.*
 import com.ultreon.browser.dialog.AboutDialog
 import com.ultreon.browser.dialog.settings.SettingsDialog
+import com.ultreon.browser.handler.*
 import com.ultreon.browser.intellijthemes.IJThemesPanel
+import com.ultreon.browser.util.*
 import org.cef.CefApp
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
-import org.cef.browser.CefFrame
 import org.cef.browser.CefMessageRouter
 import org.cef.callback.CefBeforeDownloadCallback
+import org.cef.callback.CefContextMenuParams
 import org.cef.callback.CefDownloadItem
 import org.cef.callback.CefDownloadItemCallback
-import org.cef.handler.*
-import org.cef.misc.BoolRef
-import org.cef.network.CefRequest
-import org.cef.network.CefResponse
+import org.cef.handler.CefDownloadHandlerAdapter
+import org.cef.handler.CefFocusHandlerAdapter
 import java.awt.*
+import java.awt.datatransfer.StringSelection
 import java.awt.event.*
+import java.awt.image.BufferedImage
 import java.io.File
-import java.net.URL
 import javax.imageio.ImageIO
 import javax.swing.*
-import kotlin.concurrent.thread
 import kotlin.system.exitProcess
-import java.net.URLDecoder.decode as decodeUrl
 
 
 val dataDir: File = File(appData, "UltreonBrowser")
-
-private val invalidNameRegex = Regex("(con|prn|aux|nul|com\\d|lpt\\d|\r?\n|\\\\)")
 
 /*
  * InternalFrameDemo.java requires:
@@ -38,14 +34,12 @@ private val invalidNameRegex = Regex("(con|prn|aux|nul|com\\d|lpt\\d|\r?\n|\\\\)
 class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
     private val downloadsDir: File = File(homeDir, "Downloads")
     internal var browserFocus: Boolean = false
-    private lateinit var client: CefClient
     private lateinit var tabs: BrowserTabs
+    private lateinit var client: CefClient
     private lateinit var toolBar: JToolBar
     private lateinit var address: JTextField
     private lateinit var prevBtn: JButton
     private lateinit var nextBtn: JButton
-    private lateinit var searchBtn: JButton
-    private val useOSR: Boolean = false
 
     init {
         // Set instance
@@ -95,8 +89,8 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         val msgRouter = CefMessageRouter.create()
         client.addMessageRouter(msgRouter)
 
-        toolBar = createToolbar()
         tabs = BrowserTabs(client, this)
+        toolBar = createToolbar()
 
         pane.add(tabs, BorderLayout.CENTER)
         pane.add(toolBar, BorderLayout.NORTH)
@@ -104,70 +98,46 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
 
     private fun createToolbar(): JToolBar {
         val toolBar = JToolBar()
-        prevBtn = JButton("  ◀  ").also {
-            it.addActionListener { tabs.selected.goBack()}
-            toolBar.add(it)
+        prevBtn = JButton("  ◀  ").apply {
+            addActionListener { tabs.selected.goBack()}
+            toolBar.add(this)
         }
-        nextBtn = JButton("  ▶  ").also {
-            it.addActionListener { tabs.selected.goForward()}
-            toolBar.add(it)
+        nextBtn = JButton("  ▶  ").apply {
+            addActionListener { tabs.selected.goForward()}
+            toolBar.add(this)
         }
-        address = JTextField().also {
-            it.addActionListener { _ -> tabs.selected.goTo(it.text) }
-            toolBar.add(it)
+        JButton("  🔄️  ").apply {
+            addActionListener {
+                tabs.selected.reload()
+            }
+            toolBar.add(this)
         }
-        searchBtn = JButton("  🔎  ").also {
-            it.addActionListener { _ -> tabs.selected.goTo(it.text) }
-            toolBar.add(it)
+        address = JTextField().apply {
+            addActionListener { _ -> tabs.selected.goTo(text) }
+            toolBar.add(this)
         }
-        searchBtn = JButton("  📥  ").also {
-            it.addActionListener { _ ->
+        JButton("  🔎  ").apply {
+            addActionListener { _ -> tabs.selected.goTo(text) }
+            toolBar.add(this)
+        }
+        JButton("  📥  ").apply {
+            addActionListener { _ ->
                 DownloadManager.isVisible = true
             }
-            toolBar.add(it)
+            toolBar.add(this)
         }
 
-        searchBtn = JButton("  ➕  ").also {
-            it.addActionListener { tabs.createTab("https://google.com") }
-            toolBar.add(it)
+        JButton("  ➕  ").apply {
+            addActionListener { tabs.createTab("https://google.com") }
+            toolBar.add(this)
         }
 
-        client.addFocusHandler(object : CefFocusHandlerAdapter() {
-            override fun onGotFocus(browser: CefBrowser) {
-                if (browserFocus) return
-                browserFocus = true
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
-                browser.setFocus(true)
-            }
-
-            override fun onTakeFocus(browser: CefBrowser, next: Boolean) {
-                browserFocus = false
-            }
-        })
-
-        // Update the address field when the browser URL changes.
-        client.addDisplayHandler(object : CefDisplayHandlerAdapter() {
-            override fun onAddressChange(browser: CefBrowser, frame: CefFrame, url: String) {
-                address.text = url
-            }
-
-            override fun onTitleChange(browser: CefBrowser, title: String?) {
-                tabs.onTitleChange(browser, title)
-            }
-        })
-
-        // Update the address field when the browser URL changes.
-        client.addLoadHandler(object : CefLoadHandlerAdapter() {
-            override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-                tabs.onLoadEnd(browser)
-            }
-
-            override fun onLoadStart(
-                browser: CefBrowser, frame: CefFrame, transitionType: CefRequest.TransitionType) {
-                tabs.onLoadStart(browser)
-            }
-        })
-        client.addJSDialogHandler(UBrowserJSDialogHandler(this))
+        // Client handlers
+        client.addDisplayHandler(DisplayHandler(this.tabs, this.address))
+        client.addLoadHandler(LoadHandler(this.tabs))
+        client.addJSDialogHandler(JSDialogHandler(this))
+        client.addRequestHandler(RequestHandler(this, this.tabs))
+        client.addContextMenuHandler(ContextMenuHandler(this))
 
         client.addDownloadHandler(object : CefDownloadHandlerAdapter() {
             override fun onBeforeDownload(
@@ -186,7 +156,7 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
                     )
 
                     if (result == JOptionPane.YES_OPTION)
-                        this@UltreonBrowser.downloadItem(downloadItem, callback, suggestedName ?: "file")
+                        this@UltreonBrowser.downloadItem(callback, suggestedName ?: "file")
                     else callback.Continue(null, false)
                 }
             }
@@ -196,40 +166,20 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
                 downloadItem: CefDownloadItem,
                 callback: CefDownloadItemCallback
             ) {
-                this@UltreonBrowser.onDownloadUpdated(browser, downloadItem, callback)
+                this@UltreonBrowser.onDownloadUpdated(downloadItem, callback)
             }
         })
 
-        // Update the address field when the browser URL changes.
-        client.addRequestHandler(object : CefRequestHandlerAdapter() {
-            override fun onOpenURLFromTab(
-                browser: CefBrowser,
-                frame: CefFrame,
-                target_url: String,
-                user_gesture: Boolean
-            ): Boolean {
-                tabs.createTab(target_url)
-                return true
+        client.addFocusHandler(object : CefFocusHandlerAdapter() {
+            override fun onGotFocus(browser: CefBrowser) {
+                if (browserFocus) return
+                browserFocus = true
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
+                browser.setFocus(true)
             }
 
-            override fun getResourceRequestHandler(
-                browser: CefBrowser?,
-                frame: CefFrame?,
-                request: CefRequest?,
-                isNavigation: Boolean,
-                isDownload: Boolean,
-                requestInitiator: String?,
-                disableDefaultHandling: BoolRef?
-            ): CefResourceRequestHandler {
-                return IconResourceHandler(
-                    browser,
-                    frame,
-                    request,
-                    isNavigation,
-                    isDownload,
-                    requestInitiator,
-                    disableDefaultHandling
-                )
+            override fun onTakeFocus(browser: CefBrowser, next: Boolean) {
+                browserFocus = false
             }
         })
 
@@ -246,7 +196,6 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
     }
 
     private fun onDownloadUpdated(
-        browser: CefBrowser,
         downloadItem: CefDownloadItem,
         callback: CefDownloadItemCallback
     ) {
@@ -260,14 +209,13 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         val endTime = downloadItem.endTime
         val isComplete = downloadItem.isComplete
         val isCanceled = downloadItem.isCanceled
-        val isValid = downloadItem.isValid
 
         SwingUtilities.invokeLater {
             DownloadManager.onUpdate(id, fullPath, url, totalBytes, receivedBytes, percentComplete, speed, endTime, isComplete, isCanceled, downloadItem.isValid, callback)
         }
     }
 
-    private fun downloadItem(downloadItem: CefDownloadItem?, callback: CefBeforeDownloadCallback, suggestedName: String = "file") {
+    private fun downloadItem(callback: CefBeforeDownloadCallback, suggestedName: String = "file") {
         val file = File(downloadsDir, suggestedName).let {
             if (!downloadsDir.exists()) {
                 if (!downloadsDir.mkdirs()){
@@ -292,11 +240,6 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         callback.Continue(file.path, false)
     }
 
-    private fun decode(last: String): String {
-        return decodeUrl(last, "UTF-8")
-            .replace(invalidNameRegex, "")
-    }
-
     private fun createMenuBar(): JMenuBar {
         val menuBar = JMenuBar()
 
@@ -306,50 +249,56 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         menuBar.add(windowMenu)
 
         //Set up the first menu item.
-        val openItem = JMenuItem("Open...")
-        openItem.mnemonic = KeyEvent.VK_O
-        openItem.accelerator = KeyStroke.getKeyStroke("control O")
-        openItem.action = action("Open") { openFile() }
-        windowMenu.add(openItem)
+        JMenuItem("Open...").apply {
+            mnemonic = KeyEvent.VK_O
+            accelerator = KeyStroke.getKeyStroke("control O")
+            action = com.ultreon.browser.util.action("Open") { openFile() }
+            windowMenu.add(this)
+        }
 
         //Set up the first menu item.
-        val settingsItem = JMenuItem("Settings...")
-        settingsItem.mnemonic = KeyEvent.VK_O
-        settingsItem.accelerator = KeyStroke.getKeyStroke("control O")
-        settingsItem.action = action("Settings") { configureTheme() }
-        windowMenu.add(settingsItem)
+        JMenuItem("Settings...").apply {
+            mnemonic = KeyEvent.VK_O
+            accelerator = KeyStroke.getKeyStroke("control O")
+            action = com.ultreon.browser.util.action("Settings") { configureTheme() }
+            windowMenu.add(this)
+        }
 
         //Set up the second menu item.
-        val quitItem = JMenuItem("Quit")
-        quitItem.mnemonic = KeyEvent.VK_Q
-        quitItem.accelerator = KeyStroke.getKeyStroke("alt F4")
-        quitItem.action = action("Quit") { quit() }
-        windowMenu.add(quitItem)
+        JMenuItem("Quit").apply {
+            mnemonic = KeyEvent.VK_Q
+            accelerator = KeyStroke.getKeyStroke("alt F4")
+            action = com.ultreon.browser.util.action("Quit") { quit() }
+            windowMenu.add(this)
+        }
 
         val helpMenu = JMenu("Help")
         windowMenu.mnemonic = KeyEvent.VK_H
         menuBar.add(helpMenu)
 
         //Set up the first menu item.
-        val aboutItem = JMenuItem("About")
-        aboutItem.mnemonic = KeyEvent.VK_A
-        aboutItem.accelerator = KeyStroke.getKeyStroke("F1")
-        aboutItem.action = action("About") { showAbout() }
-        helpMenu.add(aboutItem)
+        JMenuItem("About").apply {
+            mnemonic = KeyEvent.VK_A
+            accelerator = KeyStroke.getKeyStroke("F1")
+            action = com.ultreon.browser.util.action("About") { showAbout() }
+            helpMenu.add(this)
+        }
 
         //Set up the first menu item.
-        val newIssueItem = JMenuItem("New Issue")
-        newIssueItem.mnemonic = KeyEvent.VK_I
-        newIssueItem.accelerator = KeyStroke.getKeyStroke("F8")
-        newIssueItem.action = action("New Issue") { openNewIssuePage() }
-        helpMenu.add(newIssueItem)
+        JMenuItem("New Issue").apply {
+            mnemonic = KeyEvent.VK_I
+            accelerator = KeyStroke.getKeyStroke("F8")
+            action = com.ultreon.browser.util.action("New Issue") { openNewIssuePage() }
+            helpMenu.add(this)
+        }
 
         //Set up the first menu item.
-        val issueTrackerItem = JMenuItem("Issue Tracker")
-        issueTrackerItem.mnemonic = KeyEvent.VK_S
-        issueTrackerItem.accelerator = KeyStroke.getKeyStroke("control F8")
-        issueTrackerItem.action = action("Issue Tracker") { openIssueTracker() }
-        helpMenu.add(issueTrackerItem)
+        JMenuItem("Issue Tracker").apply {
+            mnemonic = KeyEvent.VK_S
+            accelerator = KeyStroke.getKeyStroke("control F8")
+            action = com.ultreon.browser.util.action("Issue Tracker") { openIssueTracker() }
+            helpMenu.add(this)
+        }
 
         return menuBar
     }
@@ -397,6 +346,63 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         exitProcess(0)
     }
 
+    fun savePage() {
+        tabs.savePage()
+    }
+
+    fun copyLink(linkUrl: String) {
+        if (linkUrl != null) {
+            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+            clipboard.setContents(StringSelection(linkUrl), null)
+        } else {
+            JOptionPane.showMessageDialog(this, "No link to copy")
+        }
+    }
+
+    fun openLinkInNewTab(linkUrl: String) {
+        if (linkUrl != null) {
+            tabs.createTab(linkUrl)
+        } else {
+            JOptionPane.showMessageDialog(this, "No link to open")
+        }
+    }
+
+    fun selectAll(browser: CefBrowser, params: CefContextMenuParams) {
+
+    }
+
+    fun takeScreenshot(browser: CefBrowser) {
+        browser.createScreenshot(false).thenAccept {
+            if (it != null) {
+                SwingUtilities.invokeLater {
+                    saveTakenScreenshot(it)
+                }
+            }
+        }
+    }
+
+    private fun saveTakenScreenshot(it: BufferedImage?) {
+        val chooser = JFileChooser().apply {
+            fileSelectionMode = JFileChooser.FILES_ONLY
+            dialogType = JFileChooser.SAVE_DIALOG
+            isAcceptAllFileFilterUsed = false
+            dialogTitle = "Save Screenshot"
+            selectedFile = File(homeDir, "screenshot.png")
+        }
+
+        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            ImageIO.write(it, "png", chooser.selectedFile)
+        }
+    }
+
+    fun reload(browser: CefBrowser) {
+        browser.reload()
+    }
+
+    fun reloadIgnoreCache(browser: CefBrowser) {
+        browser.reloadIgnoreCache()
+    }
+
     companion object {
         lateinit var instance: UltreonBrowser
             private set
@@ -420,35 +426,4 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         }
     }
 
-    @Suppress("unused")
-    inner class IconResourceHandler(
-        val browser: CefBrowser?,
-        val frame: CefFrame?,
-        val request: CefRequest?,
-        val isNavigation: Boolean,
-        val isDownload: Boolean,
-        val requestInitiator: String?,
-        val disableDefaultHandling: BoolRef?
-    ) : CefResourceRequestHandlerAdapter() {
-        override fun onResourceResponse(
-            browser: CefBrowser,
-            frame: CefFrame,
-            request: CefRequest,
-            response: CefResponse
-        ): Boolean {
-            if (request.resourceType == CefRequest.ResourceType.RT_FAVICON) {
-                val url = request.url
-                if (url.startsWith("https://")) {
-                    val url1 = URL(url)
-                    thread {
-                        val image = ImageIO.read(url1)
-                        SwingUtilities.invokeLater {
-                            tabs.onIconChange(browser, image)
-                        }
-                    }
-                }
-            }
-            return false
-        }
-    }
 }

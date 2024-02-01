@@ -1,7 +1,7 @@
-package com.ultreon.browser
+package com.ultreon.browser.util
 
 import com.google.gson.Gson
-import com.ultreon.browser.main.ProductJson
+import com.ultreon.browser.ProductJson
 import org.cef.OS.*
 import java.awt.Image
 import java.awt.Toolkit

@@ -1,6 +1,6 @@
 package com.ultreon.browser.dialog
 
-import com.ultreon.browser.*
+import com.ultreon.browser.util.*
 import java.awt.Graphics
 import java.awt.Rectangle
 import javax.swing.JPanel

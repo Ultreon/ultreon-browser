@@ -3,7 +3,7 @@
 package com.ultreon.browser.dialog.settings
 
 import com.ultreon.browser.intellijthemes.IJThemesPanel
-import com.ultreon.browser.main.UltreonBrowser
+import com.ultreon.browser.UltreonBrowser
 import java.awt.Component
 import java.awt.Container
 import java.awt.LayoutManager

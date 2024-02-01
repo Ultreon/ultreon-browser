@@ -1,14 +1,11 @@
-package com.ultreon.browser.main
+package com.ultreon.browser
 
-import com.ultreon.browser.LOADING_ICON
+import com.ultreon.browser.util.LOADING_ICON
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import java.net.URL
 import javax.swing.*
 
 
@@ -81,6 +78,10 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
 
     fun indexOfTab(browserTab: BrowserTab): Int {
         return tabs.indexOf(browserTab)
+    }
+
+    fun savePage() {
+        selected.savePage()
     }
 
     inner class CloseButtonHandler : ActionListener {

@@ -1,7 +1,7 @@
-package com.ultreon.browser
+package com.ultreon.browser.util
 
 import com.ultreon.browser.dialog.StandardDialog
-import com.ultreon.browser.main.UltreonBrowser
+import com.ultreon.browser.UltreonBrowser
 import org.cef.callback.CefDownloadItem
 import org.cef.callback.CefDownloadItemCallback
 import java.awt.BorderLayout
@@ -10,7 +10,6 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import java.awt.GridLayout
 import java.awt.Insets
 import java.io.File
 import java.time.Instant

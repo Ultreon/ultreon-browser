@@ -29,8 +29,8 @@ import com.formdev.flatlaf.themes.FlatMacDarkLaf
 import com.formdev.flatlaf.themes.FlatMacLightLaf
 import com.formdev.flatlaf.util.LoggingFacade
 import com.formdev.flatlaf.util.StringUtils
-import com.ultreon.browser.main.AppPrefs
-import com.ultreon.browser.main.Settings
+import com.ultreon.browser.AppPrefs
+import com.ultreon.browser.Settings
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Desktop

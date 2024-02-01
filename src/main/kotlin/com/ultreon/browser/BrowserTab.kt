@@ -1,7 +1,7 @@
-package com.ultreon.browser.main
+package com.ultreon.browser
 
-import com.ultreon.browser.LOADING_ICON
-import com.ultreon.browser.useOSR
+import com.ultreon.browser.util.LOADING_ICON
+import com.ultreon.browser.util.useOSR
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
 import java.awt.*
@@ -9,10 +9,14 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.io.File
+import java.io.FileWriter
 import java.net.URL
+import java.net.URLEncoder
 import javax.swing.*
 
 class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, main: UltreonBrowser, val url: String, val openInBg: Boolean) : JPanel(CardLayout()) {
+    private var loading: Boolean = true
     private var title: JLabel
     private var btnClose: JButton
     private var pnlTab: JPanel
@@ -115,7 +119,11 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
     }
 
     fun goTo(url: String) = SwingUtilities.invokeLater {
-        browser.loadURL(url)
+        if (url.isValidURL()) {
+            browser.loadURL(url)
+        } else {
+            browser.loadURL("https://www.google.com/search?q=${url.encodeUrl()}")
+        }
     }
 
     fun goForward() = SwingUtilities.invokeLater {
@@ -127,14 +135,72 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
     }
 
     fun updateIcon(image: Image) {
-        icon.icon = ImageIcon(image)
+        SwingUtilities.invokeLater {
+            icon.icon = ImageIcon(image)
+        }
     }
 
     fun loadStart() = SwingUtilities.invokeLater {
+        loading = true
         icon.icon = ImageIcon(LOADING_ICON)
     }
 
     fun loadEnd() = SwingUtilities.invokeLater {
         icon.icon = null
+        loading = false
+    }
+
+    fun savePage() {
+        browser.getSource { source ->
+            SwingUtilities.invokeLater {
+                saveSource(source)
+            }
+        }
+    }
+
+    private fun saveSource(source: String?) {
+        if (source == null) {
+            JOptionPane.showMessageDialog(UltreonBrowser.instance, "Failed to get source", "Error", JOptionPane.ERROR_MESSAGE)
+            return
+        }
+
+        val fileChooser = JFileChooser().apply {
+            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+            dialogTitle = "Save Page"
+            isAcceptAllFileFilterUsed = false
+        }
+
+        if (fileChooser.showSaveDialog(UltreonBrowser.instance) == JFileChooser.APPROVE_OPTION) {
+            val file = fileChooser.selectedFile
+            FileWriter(File(file, "index.html")).use {
+                it.write(source)
+            }
+        }
+    }
+
+    fun reload() {
+        if (loading) {
+            browser.stopLoad()
+        } else {
+            browser.reload()
+        }
+    }
+}
+
+private fun String.encodeUrl(): String {
+    return URLEncoder.encode(this, "UTF-8")
+}
+
+private fun String.isValidURL(): Boolean {
+    return try {
+        with(URL(this)) {
+            protocol == "http" || protocol == "https"
+        }
+    } catch (e: Exception) {
+        try {
+            URLEncoder.encode(this, "UTF-8") == this
+        } catch (e: Exception) {
+            false
+        }
     }
 }
