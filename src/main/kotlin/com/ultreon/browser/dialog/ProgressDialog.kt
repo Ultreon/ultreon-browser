@@ -1,12 +1,11 @@
 package com.ultreon.browser.dialog
 
+import com.ultreon.browser.util.logDebug
 import java.awt.BorderLayout
 import java.awt.Cursor
-import java.awt.FlowLayout
 import java.awt.Window
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JDialog
 import javax.swing.JProgressBar
@@ -70,7 +69,7 @@ class ProgressDialog(parent: Window?, title: String?) : JDialog(parent, title) {
                 cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
                 Thread.sleep(1000)
             } catch (e: InterruptedException) {
-                println("setVisible: Thread Interrupted")
+                logDebug("setVisible: Thread Interrupted")
             }
         } else {
             progressBar.value = 0

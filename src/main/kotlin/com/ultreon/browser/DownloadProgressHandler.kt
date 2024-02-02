@@ -1,6 +1,7 @@
 package com.ultreon.browser
 
 import com.ultreon.browser.dialog.ProgressDialog
+import com.ultreon.browser.util.logInfo
 import me.friwi.jcefmaven.EnumProgress
 import me.friwi.jcefmaven.IProgressHandler
 import java.awt.Dimension
@@ -28,7 +29,7 @@ class DownloadProgressHandler : IProgressHandler {
                 EnumProgress.INITIALIZING -> "Initializing..."
                 EnumProgress.INITIALIZED -> "Ready"
             }.also {
-                println("$it ${if (fl == -1f) "" else "$fl%"}")
+                logInfo("$it ${if (fl == -1f) "" else "$fl%"}")
             }
 
             if (stage == EnumProgress.INITIALIZED) {

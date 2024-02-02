@@ -16,7 +16,6 @@ class MessageRouterHandler(private val ultreonBrowser: UltreonBrowser, val msgRo
         persistent: Boolean,
         callback: CefQueryCallback?
     ): Boolean {
-        println("onQuery: $request")
         if (request?.startsWith("ultreon://") == true) {
             callback?.let { ultreonBrowser.handleUrlSafe(request, it) } ?: return false
             return true

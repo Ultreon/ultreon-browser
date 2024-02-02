@@ -466,7 +466,6 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
 
     fun onKeyDown(event: CefKeyboardHandler.CefKeyEvent): Boolean {
         event.windows_key_code.let {
-            println("Key pressed: $it")
             if (it == KeyEvent.VK_F5) tabs.selected?.reload()
             else if (it == KeyEvent.VK_F11) {
                 SwingUtilities.invokeLater {
@@ -555,6 +554,8 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
 
             //Create and set up the window.
             val frame = UltreonBrowser(app)
+
+            logInfo("Started browser!")
 
             //Display the window.
             frame.isVisible = true

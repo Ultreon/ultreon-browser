@@ -2,8 +2,10 @@
 
 package com.ultreon.browser.dialog.settings
 
-import com.ultreon.browser.intellijthemes.IJThemesPanel
 import com.ultreon.browser.UltreonBrowser
+import com.ultreon.browser.intellijthemes.IJThemesPanel
+import com.ultreon.browser.util.logDebug
+import com.ultreon.browser.util.logError
 import java.awt.Component
 import java.awt.Container
 import java.awt.LayoutManager
@@ -44,9 +46,9 @@ class SettingsPanel : JPanel {
      * preferred, and maximum sizes.
      */
     fun printSizes(c: Component) {
-        println("minimumSize = " + c.minimumSize)
-        println("preferredSize = " + c.preferredSize)
-        println("maximumSize = " + c.maximumSize)
+        logDebug("minimumSize = " + c.minimumSize)
+        logDebug("preferredSize = " + c.preferredSize)
+        logDebug("maximumSize = " + c.maximumSize)
     }
 
     /**
@@ -66,8 +68,7 @@ class SettingsPanel : JPanel {
         val layout: SpringLayout = try {
             parent.layout as SpringLayout
         } catch (exc: ClassCastException) {
-            System.err
-                .println("The first argument to makeGrid must use SpringLayout.")
+            logError("The first argument to makeGrid must use SpringLayout.")
             return
         }
         val xPadSpring = Spring.constant(xPad)
@@ -153,7 +154,7 @@ class SettingsPanel : JPanel {
         val layout: SpringLayout = try {
             parent.layout as SpringLayout
         } catch (exc: ClassCastException) {
-            System.err.println("The first argument to makeCompactGrid must use SpringLayout.")
+            logError("The first argument to makeCompactGrid must use SpringLayout.")
             return
         }
 

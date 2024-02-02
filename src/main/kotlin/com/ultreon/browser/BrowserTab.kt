@@ -1,6 +1,8 @@
 package com.ultreon.browser
 
 import com.ultreon.browser.util.LOADING_ICON
+import com.ultreon.browser.util.logError
+import com.ultreon.browser.util.logWarn
 import com.ultreon.browser.util.useOSR
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
@@ -97,7 +99,7 @@ class BrowserTab(
                             this@BrowserTab.goTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        logError("Failed to open the rick roll!", e)
                     }
                 }
             }
@@ -142,6 +144,9 @@ class BrowserTab(
             return@invokeLater
         }
         if (url.isValidURL()) {
+            if (url.startsWith("ultreon:")) {
+                logWarn("Experimental Ultreon URL used!")
+            }
             browser.loadURL(url)
         } else {
             browser.loadURL("https://www.google.com/search?q=${url.encodeUrl()}")

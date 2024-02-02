@@ -123,8 +123,6 @@ object DownloadManager : StandardDialog(UltreonBrowser.instance, "Download Manag
         isValid: Boolean,
         callback: CefDownloadItemCallback
     ) {
-        println("id = [${id}], fullPath = [${fullPath}], url = [${url}], totalBytes = [${totalBytes}], receivedBytes = [${receivedBytes}], percentComplete = [${percentComplete}], currentSpeed = [${currentSpeed}], endTime = [${endTime}], isComplete = [${isComplete}], isCanceled = [${isCanceled}], isValid = [${isValid}], callback = [${callback}]")
-
         val download = downloadMap[id]
         if (download != null) {
             download.receivedBytes = receivedBytes
