@@ -6,6 +6,7 @@ import org.panteleyev.jpackage.JPackageTask
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+// Gradle plugins
 plugins {
     kotlin("jvm") version "1.9.0"
     id("java")
@@ -20,20 +21,20 @@ val projectVersion = property("project_version")
 val appName = property("app_name")
 
 // Dependency versions
-val flatlafVersion = property("flatlaf_version")
-val chromeVersion = "110.0.25"
+val flatlafVersion = "3.0"
+val chromeVersion = "116.0.19.1"
 
-group = "com.ultreon"
-version = "${projectVersion}-${if (System.getenv("GITHUB_BUILD_NUMBER") == null) "local" else System.getenv("GITHUB_BUILD_NUMBER")}"
+// Version information
+val buildNr: Int = System.getenv("GITHUB_BUILD_NUMBER")?.toIntOrNull() ?: 0
 
-val packageVersion = (version as String).replace("+local", ".0").replace("+", ".")
-
-fun getViewVersion(): Any {
-    return "${projectVersion}+${if (System.getenv("GITHUB_BUILD_NUMBER") == null) "local" else System.getenv("GITHUB_BUILD_NUMBER")}"
-}
-
+val packageVersion = version.toString()
+val viewVersion: String = project.version.toString()
 val buildDate: ZonedDateTime = ZonedDateTime.now()
 
+group = "com.ultreon"
+version = "$projectVersion.$buildNr"
+
+// Repository and dependencies configuration
 repositories {
     mavenCentral()
 }
@@ -59,6 +60,7 @@ dependencies {
     implementation("me.friwi:jcefmaven:$chromeVersion")
 }
 
+// Task configuration
 tasks.jar {
     for (it in configurations.implementation.get().files) {
         if (!it.path.startsWith(projectDir.path)) {
@@ -92,7 +94,7 @@ tasks.processResources {
     inputs.property("project_id", projectId)
     inputs.property("project_name", projectName)
     inputs.property("app_name", appName)
-    inputs.property("version", getViewVersion())
+    inputs.property("version", viewVersion)
     inputs.property("build_date", buildDate.format(DateTimeFormatter.RFC_1123_DATE_TIME))
     inputs.property("chrome_version", chromeVersion)
 
@@ -101,7 +103,7 @@ tasks.processResources {
             "project_id" to projectId,
             "project_name" to projectName,
             "app_name" to appName,
-            "version" to getViewVersion(),
+            "version" to viewVersion,
             "build_date" to buildDate.format(DateTimeFormatter.RFC_1123_DATE_TIME),
             "chrome_version" to chromeVersion
         )
@@ -131,6 +133,7 @@ task("copyJar", Copy::class) {
     from(tasks.jar).into("$buildDir/jars")
 }
 
+// JPackage tasks configuration
 tasks.jpackage {
     dependsOn("build", "copyDependencies", "copyJar")
 
@@ -179,7 +182,7 @@ tasks.jpackage {
         winShortcut = false
         winUpgradeUuid = "340c6842-b3bb-4173-bc87-c7c831cd1605"
         winMenuGroup = "Ultreon Team"
-        appVersion = (getViewVersion() as String).replace("+local", ".0").replace("+", ".")
+        appVersion = viewVersion.replace("+local", ".0").replace("+", ".")
         type = ImageType.MSI
     }
 }
@@ -226,11 +229,12 @@ task("jpackageAlt", JPackageTask::class) {
     }
 }
 
+// Application configuration
 application {
     mainClass.set("MainKt")
     this.applicationName = project.property("app_name").toString()
     this.applicationDefaultJvmArgs = listOf(
         "-Dfile.encoding=UTF-8",
-        "-Dapp.version=${getViewVersion()}",
+        "-Dapp.version=${viewVersion}",
     )
 }
