@@ -21,18 +21,21 @@ val projectVersion = property("project_version")
 val appName = property("app_name")
 
 // Dependency versions
-val flatlafVersion = "3.0"
+val flatlafVersion = "3.2"
 val chromeVersion = "116.0.19.1"
 
 // Version information
 val buildNr: Int = System.getenv("GITHUB_BUILD_NUMBER")?.toIntOrNull() ?: 0
 
-val packageVersion = version.toString()
-val viewVersion: String = project.version.toString()
+val applicationVersion = "$projectVersion.$buildNr"
+val applicationName = "$appName $projectVersion"
+
+val packageVersion = applicationVersion
+val viewVersion: String = applicationVersion
 val buildDate: ZonedDateTime = ZonedDateTime.now()
 
 group = "com.ultreon"
-version = "$projectVersion.$buildNr"
+version = applicationVersion
 
 // Repository and dependencies configuration
 repositories {
@@ -55,6 +58,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10")
     implementation("com.miglayout:miglayout-swing:11.0")
     implementation("org.bidib.org.oxbow:swingbits:1.2.2")
+    implementation("org.apache.logging.log4j:log4j-core:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-api:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.20.0")
     testImplementation(kotlin("test"))
     implementation("org.jetbrains:annotations:23.0.0")
     implementation("me.friwi:jcefmaven:$chromeVersion")

@@ -3,6 +3,7 @@ package com.ultreon.browser.util
 import com.google.gson.Gson
 import com.ultreon.browser.ProductJson
 import org.cef.OS.*
+import org.slf4j.LoggerFactory
 import java.awt.Image
 import java.awt.Toolkit
 import java.io.File
@@ -57,3 +58,5 @@ const val ISSUES_URL: String = "https://github.com/Ultreon/ultreon-browser/issue
 const val NEW_ISSUE_URL: String = "https://github.com/Ultreon/ultreon-browser/issues/new/choose"
 
 val LOADING_ICON: Image = Toolkit.getDefaultToolkit().createImage(LOADING_ICON_REF.openStream().use { it.readBytes() })
+
+val LOGGER = LoggerFactory.getLogger("ultreon-browser")

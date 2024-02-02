@@ -11,3 +11,8 @@ fun action(name: String, function: () -> Unit): Action {
         }
     }
 }
+
+fun logDebug(message: String) = LOGGER.debug(message)
+fun logInfo(message: String) = LOGGER.info(message)
+fun logWarn(message: String) = LOGGER.warn(message)
+fun logError(message: String) = LOGGER.error(message)

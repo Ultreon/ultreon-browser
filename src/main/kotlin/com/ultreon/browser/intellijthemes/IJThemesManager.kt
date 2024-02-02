@@ -22,6 +22,8 @@ package com.ultreon.browser.intellijthemes
 import com.formdev.flatlaf.json.Json
 import com.formdev.flatlaf.util.LoggingFacade
 import com.formdev.flatlaf.util.StringUtils
+import com.ultreon.browser.dataDir
+import com.ultreon.browser.util.logError
 import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
@@ -79,7 +81,12 @@ internal class IJThemesManager {
 
     fun loadThemesFromDirectory() {
         // get current working directory
-        val directory = File("Themes").absoluteFile
+        // NOTE: Modified by XyperCode (Ultreon). Added the "dataDir" variable to use the data directory of the browser.
+        val directory = File(dataDir, "Themes").absoluteFile
+        if (!directory.exists() && !directory.mkdirs()) {
+            logError("Failed to create themes directory: " + directory.absolutePath)
+            return
+        }
         val themeFiles =
             directory.listFiles { _: File?, name: String ->
                 name.endsWith(".theme.json") || name.endsWith(".properties")

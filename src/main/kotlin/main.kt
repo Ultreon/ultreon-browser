@@ -1,8 +1,6 @@
 import com.formdev.flatlaf.FlatLightLaf
 import com.ultreon.browser.*
-import com.ultreon.browser.util.APP_ID
-import com.ultreon.browser.util.APP_VERSION
-import com.ultreon.browser.util.useOSR
+import com.ultreon.browser.util.*
 import me.friwi.jcefmaven.CefAppBuilder
 import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
 import org.cef.CefApp
@@ -19,13 +17,14 @@ lateinit var argv: Array<String>
 fun main(args: Array<String>) {
     argv = args
 
+    logInfo("Starting browser...")
+
     UltreonURLHandler().setHandler()
 
     AppPrefs.init(APP_ID)
     AppPrefs.setupLaf(arrayOf())
 
     CompletableFuture.runAsync {
-
         //Create a new CefAppBuilder instance
         val builder = CefAppBuilder()
 
@@ -47,7 +46,7 @@ fun main(args: Array<String>) {
 
         builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
         builder.cefSettings.cache_path = dataDir.toString()
-        builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION"
+        builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION Chrome/$CHROME_VERSION"
 
         builder.addJcefArgs(*argv)
 
@@ -61,6 +60,9 @@ fun main(args: Array<String>) {
         }
     }
 
+    while (true) {
+        Thread.sleep(1000)
+    }
 }
 
 @Throws(Exception::class)
