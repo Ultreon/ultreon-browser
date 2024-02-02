@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter
 plugins {
     kotlin("jvm") version "1.9.0"
     id("java")
+    id("application")
     id("org.panteleyev.jpackageplugin") version "1.5.0"
 }
 
@@ -147,8 +148,6 @@ tasks.jpackage {
 
     destination = "$buildDir/dist"
 
-    licenseFile = "$projectDir/package/LICENSE.txt"
-
     javaOptions = listOf("-Dfile.encoding=UTF-8")
 
     aboutUrl = "https://github.com/Ultreon/ultreon-browser"
@@ -181,6 +180,7 @@ tasks.jpackage {
         winUpgradeUuid = "340c6842-b3bb-4173-bc87-c7c831cd1605"
         winMenuGroup = "Ultreon Team"
         appVersion = (getViewVersion() as String).replace("+local", ".0").replace("+", ".")
+        type = ImageType.MSI
     }
 }
 
@@ -220,18 +220,17 @@ task("jpackageAlt", JPackageTask::class) {
     }
 
     windows {
-        aboutUrl = "https://github.com/Ultreon/ultreon-browser"
-        licenseFile = "$projectDir/package/LICENSE.txt"
         icon = "icons/icon.ico"
-        winMenu = true
-        winDirChooser = true
-        winConsole = false
-        winPerUserInstall = true
-        winShortcutPrompt = true
-        winShortcut = false
-        winUpgradeUuid = "340c6842-b3bb-4173-bc87-c7c831cd1605"
-        winMenuGroup = "Ultreon Team"
-        appVersion = (getViewVersion() as String).replace("+local", ".0").replace("+", ".")
-        type = ImageType.MSI
+        appVersion = project.version.toString()
+        type = ImageType.APP_IMAGE
     }
+}
+
+application {
+    mainClass.set("MainKt")
+    this.applicationName = project.property("app_name").toString()
+    this.applicationDefaultJvmArgs = listOf(
+        "-Dfile.encoding=UTF-8",
+        "-Dapp.version=${getViewVersion()}",
+    )
 }

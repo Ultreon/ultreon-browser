@@ -9,17 +9,16 @@ import org.cef.CefApp
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefMessageRouter
-import org.cef.callback.CefBeforeDownloadCallback
-import org.cef.callback.CefContextMenuParams
-import org.cef.callback.CefDownloadItem
-import org.cef.callback.CefDownloadItemCallback
+import org.cef.callback.*
 import org.cef.handler.CefDownloadHandlerAdapter
 import org.cef.handler.CefFocusHandlerAdapter
+import org.cef.handler.CefKeyboardHandler
 import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.*
 import java.awt.image.BufferedImage
 import java.io.File
+import java.net.URL
 import javax.imageio.ImageIO
 import javax.swing.*
 import kotlin.system.exitProcess
@@ -32,20 +31,24 @@ val dataDir: File = File(appData, "UltreonBrowser")
  *   MyInternalFrame.java
  */
 class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
+    private var menu: JMenuBar
+    private var screen: GraphicsDevice? = null
+    private var fullscreenTab: BrowserTab? = null
+    private var browserUI: Component? = null
+    private var fullscreen: Boolean = false
     private val downloadsDir: File = File(homeDir, "Downloads")
     internal var browserFocus: Boolean = false
     private lateinit var tabs: BrowserTabs
     private lateinit var client: CefClient
-    private lateinit var toolBar: JToolBar
-    private lateinit var address: JTextField
-    private lateinit var prevBtn: JButton
-    private lateinit var nextBtn: JButton
 
     init {
         // Set instance
         instance = this
 
         themesPanel = IJThemesPanel()
+
+        layout = BorderLayout()
+        isResizable = true
 
         // Get screen information.
         val environment = GraphicsEnvironment.getLocalGraphicsEnvironment()
@@ -65,7 +68,8 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         defaultCloseOperation = DO_NOTHING_ON_CLOSE
 
         contentPane = createContentPane()
-        jMenuBar = createMenuBar()
+        menu = createMenuBar()
+        jMenuBar = menu
     }
 
     private fun createContentPane(): Container {
@@ -87,53 +91,19 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         })
 
         val msgRouter = CefMessageRouter.create()
+        msgRouter.addHandler(MessageRouterHandler(this, msgRouter), true)
         client.addMessageRouter(msgRouter)
 
         tabs = BrowserTabs(client, this)
-        toolBar = createToolbar()
+
+        this.setupHandlers()
 
         pane.add(tabs, BorderLayout.CENTER)
-        pane.add(toolBar, BorderLayout.NORTH)
     }
 
-    private fun createToolbar(): JToolBar {
-        val toolBar = JToolBar()
-        prevBtn = JButton("  ◀  ").apply {
-            addActionListener { tabs.selected.goBack()}
-            toolBar.add(this)
-        }
-        nextBtn = JButton("  ▶  ").apply {
-            addActionListener { tabs.selected.goForward()}
-            toolBar.add(this)
-        }
-        JButton("  🔄️  ").apply {
-            addActionListener {
-                tabs.selected.reload()
-            }
-            toolBar.add(this)
-        }
-        address = JTextField().apply {
-            addActionListener { _ -> tabs.selected.goTo(text) }
-            toolBar.add(this)
-        }
-        JButton("  🔎  ").apply {
-            addActionListener { _ -> tabs.selected.goTo(text) }
-            toolBar.add(this)
-        }
-        JButton("  📥  ").apply {
-            addActionListener { _ ->
-                DownloadManager.isVisible = true
-            }
-            toolBar.add(this)
-        }
-
-        JButton("  ➕  ").apply {
-            addActionListener { tabs.createTab("https://google.com") }
-            toolBar.add(this)
-        }
-
+    private fun setupHandlers() {
         // Client handlers
-        client.addDisplayHandler(DisplayHandler(this.tabs, this.address))
+        client.addDisplayHandler(DisplayHandler(this.tabs))
         client.addLoadHandler(LoadHandler(this.tabs))
         client.addJSDialogHandler(JSDialogHandler(this))
         client.addRequestHandler(RequestHandler(this, this.tabs))
@@ -175,24 +145,31 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
                 if (browserFocus) return
                 browserFocus = true
                 KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
-                browser.setFocus(true)
+                tabs.browsers[browser]?.let {
+                    tabs.select(it)
+                }
             }
 
             override fun onTakeFocus(browser: CefBrowser, next: Boolean) {
                 browserFocus = false
+                browser.setFocus(false)
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent()
             }
         })
 
-        address.addFocusListener(object : FocusAdapter() {
+        client.addKeyboardHandler(KeyboardHandler(this))
+
+        this.addFocusListener(object : FocusAdapter() {
             override fun focusGained(e: FocusEvent) {
-                if (!browserFocus) return
+                if (browserFocus) return
+                browserFocus = true
+            }
+
+            override fun focusLost(e: FocusEvent) {
                 browserFocus = false
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
-                address.requestFocus()
+                tabs.selected?.browser?.setFocus(false)
             }
         })
-
-        return toolBar
     }
 
     private fun onDownloadUpdated(
@@ -211,14 +188,27 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         val isCanceled = downloadItem.isCanceled
 
         SwingUtilities.invokeLater {
-            DownloadManager.onUpdate(id, fullPath, url, totalBytes, receivedBytes, percentComplete, speed, endTime, isComplete, isCanceled, downloadItem.isValid, callback)
+            DownloadManager.onUpdate(
+                id,
+                fullPath,
+                url,
+                totalBytes,
+                receivedBytes,
+                percentComplete,
+                speed,
+                endTime,
+                isComplete,
+                isCanceled,
+                downloadItem.isValid,
+                callback
+            )
         }
     }
 
     private fun downloadItem(callback: CefBeforeDownloadCallback, suggestedName: String = "file") {
         val file = File(downloadsDir, suggestedName).let {
             if (!downloadsDir.exists()) {
-                if (!downloadsDir.mkdirs()){
+                if (!downloadsDir.mkdirs()) {
                     JOptionPane.showMessageDialog(this, "Could not create downloads directory: $downloadsDir")
                     return
                 }
@@ -248,27 +238,38 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         windowMenu.mnemonic = KeyEvent.VK_W
         menuBar.add(windowMenu)
 
-        //Set up the first menu item.
-        JMenuItem("Open...").apply {
-            mnemonic = KeyEvent.VK_O
-            accelerator = KeyStroke.getKeyStroke("control O")
-            action = com.ultreon.browser.util.action("Open") { openFile() }
+        JMenuItem("New Tab").apply {
+            mnemonic = KeyEvent.VK_T
+            accelerator = KeyStroke.getKeyStroke("control T")
+            action = action("New Tab", ::newTab)
             windowMenu.add(this)
         }
 
         //Set up the first menu item.
-        JMenuItem("Settings...").apply {
+        JMenuItem("Open...").apply {
             mnemonic = KeyEvent.VK_O
             accelerator = KeyStroke.getKeyStroke("control O")
-            action = com.ultreon.browser.util.action("Settings") { configureTheme() }
+            action = action("Open", ::openFile)
             windowMenu.add(this)
         }
+
+        JSeparator().apply { windowMenu.add(this) }
+
+        //Set up the first menu item.
+        JMenuItem("Settings...").apply {
+            mnemonic = KeyEvent.VK_S
+            accelerator = KeyStroke.getKeyStroke("control O")
+            action = action("Settings", ::configureTheme)
+            windowMenu.add(this)
+        }
+
+        JSeparator().apply { windowMenu.add(this) }
 
         //Set up the second menu item.
         JMenuItem("Quit").apply {
             mnemonic = KeyEvent.VK_Q
             accelerator = KeyStroke.getKeyStroke("alt F4")
-            action = com.ultreon.browser.util.action("Quit") { quit() }
+            action = action("Quit", ::quit)
             windowMenu.add(this)
         }
 
@@ -280,7 +281,7 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         JMenuItem("About").apply {
             mnemonic = KeyEvent.VK_A
             accelerator = KeyStroke.getKeyStroke("F1")
-            action = com.ultreon.browser.util.action("About") { showAbout() }
+            action = action("About", ::showAbout)
             helpMenu.add(this)
         }
 
@@ -288,7 +289,7 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         JMenuItem("New Issue").apply {
             mnemonic = KeyEvent.VK_I
             accelerator = KeyStroke.getKeyStroke("F8")
-            action = com.ultreon.browser.util.action("New Issue") { openNewIssuePage() }
+            action = action("New Issue", ::openNewIssuePage)
             helpMenu.add(this)
         }
 
@@ -296,11 +297,16 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
         JMenuItem("Issue Tracker").apply {
             mnemonic = KeyEvent.VK_S
             accelerator = KeyStroke.getKeyStroke("control F8")
-            action = com.ultreon.browser.util.action("Issue Tracker") { openIssueTracker() }
+            action = action("Issue Tracker", ::openIssueTracker)
             helpMenu.add(this)
         }
 
         return menuBar
+    }
+
+    private fun newTab() {
+        val tab = tabs.createTabDirectly("https://google.com")
+        tab.toolbar.address.grabFocus()
     }
 
     /**
@@ -351,24 +357,16 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
     }
 
     fun copyLink(linkUrl: String) {
-        if (linkUrl != null) {
-            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-            clipboard.setContents(StringSelection(linkUrl), null)
-        } else {
-            JOptionPane.showMessageDialog(this, "No link to copy")
-        }
+        val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+        clipboard.setContents(StringSelection(linkUrl), null)
     }
 
     fun openLinkInNewTab(linkUrl: String) {
-        if (linkUrl != null) {
-            tabs.createTab(linkUrl)
-        } else {
-            JOptionPane.showMessageDialog(this, "No link to open")
-        }
+        tabs.createTab(linkUrl)
     }
 
     fun selectAll(browser: CefBrowser, params: CefContextMenuParams) {
-
+        browser.executeJavaScript("window.getSelection().selectAllChildren(document.body)", "ultreon:///dynamic.js", 0)
     }
 
     fun takeScreenshot(browser: CefBrowser) {
@@ -401,6 +399,143 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
 
     fun reloadIgnoreCache(browser: CefBrowser) {
         browser.reloadIgnoreCache()
+    }
+
+    fun handleUrl(request: String, callback: CefQueryCallback?) {
+        URL(request).let {
+            if (!it.protocol.startsWith("ultreon")) {
+                return
+            }
+
+            it.path.let { path ->
+                if (path == "/favicon.ico") return
+                if (path == "/favicon.png") return
+
+                // TODO: Add webpage support
+                when (path) {
+                    "/issues" -> {
+                        openIssueTracker()
+                        callback?.success("")
+                    }
+                    "/new-issue" -> {
+                        openNewIssuePage()
+                        callback?.success("")
+                    }
+                    "/about" -> {
+                        showAbout()
+                        callback?.success("")
+                    }
+                    "/theme" -> {
+                        configureTheme()
+                        callback?.success("")
+                    }
+                    else -> {
+
+                    }
+                }
+            }
+        }
+    }
+
+    fun handleUrlSafe(request: String, callback: CefQueryCallback?) {
+        URL(request).let {
+            if (!it.protocol.startsWith("ultreon")) {
+                return
+            }
+
+            it.path.let {
+                when (it) {
+                    "/info" -> {
+                        val info = """
+                            {
+                                "name": "$APP_NAME",
+                                "version": "$APP_VERSION"
+                            }
+                        """.trimIndent()
+
+                        callback?.success(info)
+                    }
+
+                    else -> {
+                        callback?.failure(404, "Page not found")
+                    }
+                }
+            }
+        }
+    }
+
+    fun onKeyDown(event: CefKeyboardHandler.CefKeyEvent): Boolean {
+        event.windows_key_code.let {
+            println("Key pressed: $it")
+            if (it == KeyEvent.VK_F5) tabs.selected?.reload()
+            else if (it == KeyEvent.VK_F11) {
+                SwingUtilities.invokeLater {
+                    tabs.selected?.let selectTab@{ tab ->
+                        if (fullscreen) {
+                            val fTab = fullscreenTab ?: return@selectTab
+                            disableFullscreen(fTab)
+                        } else {
+                            enableFullscreen(tab)
+                        }
+                    }
+                }
+            } else if (it == KeyEvent.VK_F1) {
+                showAbout()
+            } else if (it == KeyEvent.VK_S && event.modifiers and KeyEvent.CTRL_DOWN_MASK != 0) {
+                savePage()
+            } else if (it == KeyEvent.VK_O && event.modifiers and KeyEvent.CTRL_DOWN_MASK != 0) {
+                openFile()
+            } else if (it == KeyEvent.VK_T && event.modifiers and KeyEvent.CTRL_DOWN_MASK != 0) {
+                newTab()
+            } else if (it == KeyEvent.VK_N && event.modifiers and KeyEvent.CTRL_DOWN_MASK != 0) {
+                newTab()
+            } else if (it == KeyEvent.VK_W && event.modifiers and KeyEvent.CTRL_DOWN_MASK != 0) {
+                tabs.selected?.let { tab -> tabs.closeTab(tab) }
+            } else {
+                return false
+            }
+            return true
+        }
+    }
+
+    private fun disableFullscreen(tab: BrowserTab) {
+        fullscreen = false
+        extendedState = NORMAL
+        this.browserUI = null
+        this.remove(tab.browserUI)
+        this.screen?.fullScreenWindow = null
+        this.screen = null
+        this.tabs.isVisible = true
+        tab.add(tab.browserUI)
+        this.jMenuBar = createMenuBar()
+        tab.revalidate()
+        this.doLayout()
+        this.revalidate()
+        this.fullscreenTab = null
+    }
+
+    private fun enableFullscreen(tab: BrowserTab) {
+        val bounds = this.bounds
+        GraphicsEnvironment.getLocalGraphicsEnvironment().also { environment ->
+            val screen = environment.screenDevices.filter {
+                val displayMode = it.defaultConfiguration
+                return@filter displayMode.bounds.intersects(bounds)
+            }.first()
+
+            fullscreen = true
+            extendedState = MAXIMIZED_BOTH
+            tab.remove(tab.browserUI)
+            this.screen = screen
+            screen.fullScreenWindow = this
+            this.fullscreenTab = tab
+            this.tabs.isVisible = false
+            this.jMenuBar = null
+            this.browserUI = tab.browserUI
+            this.add(tab.browserUI)
+            tab.revalidate()
+            this.doLayout()
+            this.revalidate()
+        }
     }
 
     companion object {

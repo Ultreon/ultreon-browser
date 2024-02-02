@@ -26,11 +26,12 @@ class ContextMenuHandler(
         model: CefMenuModel
     ) {
         params.linkUrl?.let {
-            if (!it.startsWith("http://") && !it.startsWith("https://")) return
+            if (!it.startsWith("http://") && !it.startsWith("https://")) return@let
             model.addItem(copyLinkId, "Copy Link")
             model.addItem(openLinkInNewTabId, "Open Link in New Tab")
             model.addSeparator()
         }
+
         model.addItem(selectAllId, "Select All")
         model.addItem(savePageId, "Save Page As...")
         model.addSeparator()

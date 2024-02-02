@@ -1,10 +1,8 @@
-package com.ultreon.browser.util
-
 import com.formdev.flatlaf.FlatLightLaf
-import com.ultreon.browser.AppPrefs
-import com.ultreon.browser.DownloadProgressHandler
-import com.ultreon.browser.UltreonBrowser
-import com.ultreon.browser.dataDir
+import com.ultreon.browser.*
+import com.ultreon.browser.util.APP_ID
+import com.ultreon.browser.util.APP_VERSION
+import com.ultreon.browser.util.useOSR
 import me.friwi.jcefmaven.CefAppBuilder
 import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
 import org.cef.CefApp
@@ -20,6 +18,8 @@ lateinit var argv: Array<String>
 
 fun main(args: Array<String>) {
     argv = args
+
+    UltreonURLHandler().setHandler()
 
     AppPrefs.init(APP_ID)
     AppPrefs.setupLaf(arrayOf())

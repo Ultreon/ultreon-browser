@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run Browser" type="JetRunConfigurationType">
-    <option name="MAIN_CLASS_NAME" value="com.ultreon.browser.MainKt" />
+    <option name="MAIN_CLASS_NAME" value="MainKt" />
     <module name="ultreon-browser.main" />
     <shortenClasspath name="NONE" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />

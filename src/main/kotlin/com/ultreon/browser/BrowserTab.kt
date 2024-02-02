@@ -15,32 +15,32 @@ import java.net.URL
 import java.net.URLEncoder
 import javax.swing.*
 
-class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, main: UltreonBrowser, val url: String, val openInBg: Boolean) : JPanel(CardLayout()) {
+class BrowserTab(
+    private val tabs: BrowserTabs,
+    private val iconLabel: JLabel,
+    client: CefClient,
+    main: UltreonBrowser,
+    url: String,
+    private val openInBg: Boolean
+) : JPanel(CardLayout()) {
+    var toolbar: BrowserToolBar
     private var loading: Boolean = true
     private var title: JLabel
     private var btnClose: JButton
     private var pnlTab: JPanel
-    private val browserUI: Component
+    val browserUI: Component
+    var url: URL
+        get() = URL(browser.url)
+        set(value) {
+            if (value.protocol != "http" && value.protocol != "https") {
+                throw IllegalArgumentException("Invalid protocol")
+            }
+            browser.loadURL(value.toString())
+        }
     val browser: CefBrowser = client.createBrowser(url, useOSR, true)
-
-    private val focusAdapter = object : FocusAdapter() {
-        override fun focusGained(e: FocusEvent) {
-            if (main.browserFocus) return
-            main.browserFocus = true
-            KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
-            browser.setFocus(true)
-        }
-
-        override fun focusLost(e: FocusEvent) {
-            main.browserFocus = false
-            browser.setFocus(false)
-        }
-    }
 
     init {
         browserUI = browser.uiComponent
-
-        main.addFocusListener(focusAdapter)
 
         this.pnlTab = JPanel(GridBagLayout())
         this.pnlTab.maximumSize.height = 16
@@ -52,8 +52,8 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
         gbc.ipadx = 20
         gbc.weightx = 0.0
 
-        this.icon.preferredSize = Dimension(0, 16)
-        this.pnlTab.add(icon, gbc)
+        this.iconLabel.preferredSize = Dimension(0, 16)
+        this.pnlTab.add(iconLabel, gbc)
 
         this.title = JLabel(url).also {
             gbc.gridx++
@@ -63,7 +63,7 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
             this.pnlTab.add(it, gbc)
         }
 
-        this.title.preferredSize = Dimension(80, 16)
+        this.title.preferredSize = Dimension(120, 16)
 
         this.btnClose = JButton("❌").also {
             gbc.gridx++
@@ -75,6 +75,10 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
             it.addActionListener {
                 browser.close(true) // FIXME do not force-close the browser tab.
                 tabs.removeTabAt(tabs.indexOfTab(this@BrowserTab))
+                tabs.browsers.remove(browser)
+                if (tabs.browsers.isEmpty()) {
+                    tabs.createTab("https://google.com")
+                }
             }
             pnlTab.add(it, gbc)
         }
@@ -99,7 +103,21 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
             }
         })
 
-        add(browserUI)
+        this.addFocusListener(object : FocusAdapter() {
+            override fun focusGained(e: FocusEvent) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
+                this@BrowserTab.browser.setFocus(true)
+            }
+
+            override fun focusLost(e: FocusEvent) {
+                this@BrowserTab.browser.setFocus(false)
+            }
+        })
+
+        layout = BorderLayout()
+        toolbar = BrowserToolBar(this, tabs)
+        add(toolbar, BorderLayout.NORTH)
+        add(browserUI, BorderLayout.CENTER)
     }
 
     fun attach() {
@@ -114,11 +132,15 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
 
     fun updateTitle(title: String?) = SwingUtilities.invokeLater {
         if (browser != this@BrowserTab.browser) return@invokeLater
-        val usedTitle = title ?: url
+        val usedTitle = title ?: url.toString()
         this.title.text = usedTitle
     }
 
     fun goTo(url: String) = SwingUtilities.invokeLater {
+        if (url.startsWith("ultreon://")) {
+            browser.loadURL(url)
+            return@invokeLater
+        }
         if (url.isValidURL()) {
             browser.loadURL(url)
         } else {
@@ -126,27 +148,21 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
         }
     }
 
-    fun goForward() = SwingUtilities.invokeLater {
-        browser.goForward()
-    }
+    fun goTo(url: URL) = goTo(url.toString())
 
-    fun goBack() = SwingUtilities.invokeLater {
-        browser.goBack()
-    }
+    fun goForward() = SwingUtilities.invokeLater(browser::goForward)
 
-    fun updateIcon(image: Image) {
-        SwingUtilities.invokeLater {
-            icon.icon = ImageIcon(image)
-        }
-    }
+    fun goBack() = SwingUtilities.invokeLater(browser::goBack)
+
+    fun updateIcon(image: Image) = SwingUtilities.invokeLater { iconLabel.icon = ImageIcon(image) }
 
     fun loadStart() = SwingUtilities.invokeLater {
         loading = true
-        icon.icon = ImageIcon(LOADING_ICON)
+        iconLabel.icon = ImageIcon(LOADING_ICON)
     }
 
     fun loadEnd() = SwingUtilities.invokeLater {
-        icon.icon = null
+        iconLabel.icon = null
         loading = false
     }
 
@@ -178,13 +194,7 @@ class BrowserTab(val tabs: BrowserTabs, val icon: JLabel, client: CefClient, mai
         }
     }
 
-    fun reload() {
-        if (loading) {
-            browser.stopLoad()
-        } else {
-            browser.reload()
-        }
-    }
+    fun reload() = if (loading) browser.stopLoad() else browser.reload()
 }
 
 private fun String.encodeUrl(): String {
@@ -194,7 +204,7 @@ private fun String.encodeUrl(): String {
 private fun String.isValidURL(): Boolean {
     return try {
         with(URL(this)) {
-            protocol == "http" || protocol == "https"
+            protocol == "http" || protocol == "https" || protocol == "file" || protocol == "ultreon"
         }
     } catch (e: Exception) {
         try {

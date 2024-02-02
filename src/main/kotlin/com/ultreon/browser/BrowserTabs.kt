@@ -3,50 +3,79 @@ package com.ultreon.browser
 import com.ultreon.browser.util.LOADING_ICON
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
-import java.awt.*
+import java.awt.Dimension
+import java.awt.Image
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import javax.swing.*
+import javax.swing.ImageIcon
+import javax.swing.JLabel
+import javax.swing.JTabbedPane
+import javax.swing.SwingUtilities
 
 
 class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane(TOP) {
     private val lock: Any = Any()
     private val tabs = mutableListOf<BrowserTab>()
-    private val browsers = mutableMapOf<CefBrowser, BrowserTab>()
+    internal val browsers = mutableMapOf<CefBrowser, BrowserTab>()
 
-    val selected: BrowserTab
+    val selected: BrowserTab?
         get() {
+            val selectedIndex = selectedIndex
+            if (selectedIndex == -1) {
+                return null
+            }
             return tabs[selectedIndex]
         }
+
+    val oldSelected: BrowserTab? = selected
 
     init {
         this.tabLayoutPolicy = SCROLL_TAB_LAYOUT
         createTab("https://google.com")
+
+        addChangeListener {
+            val browserTab = oldSelected
+            browserTab?.browser?.setFocus(false)
+        }
     }
 
     fun createTab(url: String, background: Boolean = false) {
         SwingUtilities.invokeLater {
-            val icon = JLabel(ImageIcon(LOADING_ICON))
-
-            icon.maximumSize = Dimension(16, 16)
-            icon.size = Dimension(16, 16)
-            icon.preferredSize = Dimension(16, 16)
-            icon.minimumSize = Dimension(16, 16)
-            val browserTab = BrowserTab(this, icon, client, main, url, background)
-
-            tabs += browserTab
-            browsers[browserTab.browser] = browserTab
-
-            this.addTab(url, browserTab)
-
-            browserTab.attach()
+            if (url.startsWith("ultreon://")) {
+                UltreonBrowser.instance.handleUrl(url, null)
+                return@invokeLater
+            }
+            createTabDirectly(url, background)
         }
+    }
+
+    fun createTabDirectly(url: String, background: Boolean = false): BrowserTab {
+        val icon = JLabel(ImageIcon(LOADING_ICON))
+
+        icon.maximumSize = Dimension(16, 16)
+        icon.size = Dimension(16, 16)
+        icon.preferredSize = Dimension(16, 16)
+        icon.minimumSize = Dimension(16, 16)
+        val browserTab = BrowserTab(this, icon, client, main, url, background)
+
+        tabs += browserTab
+        browsers[browserTab.browser] = browserTab
+
+        this.addTab(url, browserTab)
+
+        browserTab.attach()
+
+        return browserTab
     }
 
     override fun removeTabAt(index: Int) {
         super.removeTabAt(index)
         val browserTab = tabs.removeAt(index)
         browserTab.browser.close(true)
+    }
+
+    fun closeTab(browserTab: BrowserTab) {
+        removeTabAt(tabs.indexOf(browserTab))
     }
 
     fun onIconChange(browser: CefBrowser, image: Image): Boolean {
@@ -81,7 +110,11 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
     }
 
     fun savePage() {
-        selected.savePage()
+        selected?.savePage()
+    }
+
+    fun select(it: BrowserTab) {
+        selectedIndex = tabs.indexOf(it)
     }
 
     inner class CloseButtonHandler : ActionListener {
