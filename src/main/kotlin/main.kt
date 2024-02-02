@@ -1,11 +1,20 @@
 import com.formdev.flatlaf.FlatLightLaf
+import com.formdev.flatlaf.util.SystemInfo.javaVersion
+import com.formdev.flatlaf.util.SystemInfo.osVersion
 import com.ultreon.browser.*
 import com.ultreon.browser.util.*
 import me.friwi.jcefmaven.CefAppBuilder
 import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
 import org.cef.CefApp
+import org.cef.OS.*
 import org.oxbow.swingbits.dialog.task.TaskDialogs
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
@@ -16,7 +25,10 @@ lateinit var argv: Array<String>
 
 fun main(args: Array<String>) {
     argv = args
+    main()
+}
 
+private fun main() {
     logInfo("Starting browser...")
 
     UltreonURLHandler().setHandler()
@@ -68,6 +80,37 @@ fun main(args: Array<String>) {
 
 @Throws(Exception::class)
 fun crash(e: Throwable) {
+    logError("Ultreon Browser crashed!", e)
+
+    e.stackTraceToString().let {
+        val crashLog = it.run {
+            replace("\t", "  ")
+            return@run """
+                OS: $osName
+                OS Version: $osVersion
+                App Version: $APP_VERSION
+                CEF Version: $CHROME_VERSION
+                Java Version: $javaVersion
+                
+                ------------
+                Exception:
+                ${e.stackTraceToString()}
+            """.trimIndent()
+        }
+
+        runCatching {
+            Files.createDirectories(path("UB-Crashes"))
+            Files.writeString(
+                path(
+                    "UB-Crashes",
+                    "crash-%s.txt".format(
+                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
+                    )
+                ), crashLog, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE
+            )
+        }
+    }
+
     try {
         UltreonBrowser.instance.dispose()
     } catch (e: Exception) {
@@ -82,3 +125,21 @@ fun crash(e: Throwable) {
         exitProcess(1)
     }
 }
+
+fun path(path: String, vararg siblings: String): Path {
+    return Paths.get(path, *siblings)
+}
+
+val appData: File = when {
+    isWindows() -> File(System.getenv("APPDATA").toString())
+    isLinux() -> File("~/.config/")
+    isMacintosh() -> File("~/Library/Applications Support")
+    else -> throw UnsupportedOperationException("Unsupported operating system: $osName")
+}
+val homeDir: File = when {
+    isWindows() -> File(System.getProperty("user.home").toString())
+    isLinux() -> File("~/")
+    isMacintosh() -> File("~/")
+    else -> File(System.getProperty("user.home").toString())
+}
+val dataDir: File = File(appData, "UltreonBrowser")

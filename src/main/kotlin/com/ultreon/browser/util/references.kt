@@ -2,13 +2,10 @@ package com.ultreon.browser.util
 
 import com.google.gson.Gson
 import com.ultreon.browser.ProductJson
-import org.cef.OS.*
 import org.slf4j.LoggerFactory
 import java.awt.Image
 import java.awt.Toolkit
-import java.io.File
 import java.lang.System.getProperty
-import java.lang.System.getenv
 import java.net.URL
 
 val osName: String = getProperty("os.name")
@@ -17,21 +14,6 @@ private val productJson = gson.fromJson(
     ProductJson::class.java.getResourceAsStream("/product.json")!!.bufferedReader(),
     ProductJson::class.java
 )
-
-val appData: File = when {
-    isWindows() -> File(getenv("APPDATA").toString())
-    isLinux() -> File("~/.config/")
-    isMacintosh() -> File("~/Library/Applications Support")
-    else -> throw UnsupportedOperationException("Unsupported operating system: $osName")
-}
-
-val homeDir: File = when {
-    isWindows() -> File(getProperty("user.home").toString())
-    isLinux() -> File("~/")
-    isMacintosh() -> File("~/")
-    else -> File(getProperty("user.home").toString())
-}
-
 
 const val useOSR = false
 

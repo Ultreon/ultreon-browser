@@ -3,6 +3,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.panteleyev.jpackage.ImageType
 import org.panteleyev.jpackage.JPackageTask
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -61,6 +63,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-core:2.20.0")
     implementation("org.apache.logging.log4j:log4j-api:2.20.0")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.20.0")
+    implementation("net.java.dev.jna:jna:5.13.0")
     testImplementation(kotlin("test"))
     implementation("org.jetbrains:annotations:23.0.0")
     implementation("me.friwi:jcefmaven:$chromeVersion")
@@ -68,18 +71,6 @@ dependencies {
 
 // Task configuration
 tasks.jar {
-    for (it in configurations.implementation.get().files) {
-        if (!it.path.startsWith(projectDir.path)) {
-            if (it.isDirectory) {
-                from(it)
-            } else {
-                from(zipTree(it))
-            }
-        }
-    }
-
-    exclude("META-INF/*.RSA", "META-INF/*.DSA", "META-INF/*.SF")
-
     //noinspection GroovyAssignabilityCheck
     manifest {
         //noinspection GroovyAssignabilityCheck
@@ -87,7 +78,9 @@ tasks.jar {
             Pair("Implementation-Title", "QBubbles"),
             Pair("Implementation-Vendor", "QTech Community"),
             Pair("Implementation-Version", "1.0-indev1"),
-            Pair("Main-Class", "MainKt"),
+            Pair("Main-Class", "PreMain"),
+            Pair("Agent-Class", "PreMain"),
+            Pair("Premain-Class", "PreMain"),
             Pair("Multi-Release", "true")
         ))
     }
@@ -121,12 +114,12 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "17"
 }
 
 tasks.compileJava {
-    targetCompatibility = "1.8"
-    sourceCompatibility = "1.8"
+    targetCompatibility = "17"
+    sourceCompatibility = "17"
 }
 
 mkdir("$projectDir/run/")
@@ -139,9 +132,18 @@ task("copyJar", Copy::class) {
     from(tasks.jar).into("$buildDir/jars")
 }
 
+// Clear build/dist
+task("cleanDist", Delete::class) {
+    delete(fileTree("$buildDir/dist"))
+    Files.deleteIfExists(Paths.get("$buildDir/dist"))
+    group = "build"
+}
+
 // JPackage tasks configuration
 tasks.jpackage {
-    dependsOn("build", "copyDependencies", "copyJar")
+    dependsOn("build", "copyDependencies", "copyJar", "cleanDist")
+
+    group = "package"
 
     input  = "$buildDir/jars"
     destination = "$buildDir/dist"
@@ -153,7 +155,7 @@ tasks.jpackage {
     runtimeImage = System.getProperty("java.home")
 
     mainJar = tasks.jar.get().archiveFileName.get()
-    mainClass = "com.ultreon.browser.MainKt"
+    mainClass = "PreMain"
 
     destination = "$buildDir/dist"
 
@@ -194,7 +196,9 @@ tasks.jpackage {
 }
 
 task("jpackageAlt", JPackageTask::class) {
-    dependsOn("build", "copyDependencies", "copyJar")
+    dependsOn("build", "copyDependencies", "copyJar", "cleanDist")
+
+    group = "package"
 
     input  = "$buildDir/jars"
     destination = "$buildDir/dist"
@@ -206,7 +210,7 @@ task("jpackageAlt", JPackageTask::class) {
     runtimeImage = System.getProperty("java.home")
 
     mainJar = tasks.jar.get().archiveFileName.get()
-    mainClass = "com.ultreon.browser.MainKt"
+    mainClass = "PreMain"
 
     destination = "$buildDir/dist"
 
@@ -232,12 +236,17 @@ task("jpackageAlt", JPackageTask::class) {
         icon = "icons/icon.ico"
         appVersion = project.version.toString()
         type = ImageType.APP_IMAGE
+        this.winConsole = true
     }
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 // Application configuration
 application {
-    mainClass.set("MainKt")
+    mainClass.set("PreMain")
     this.applicationName = project.property("app_name").toString()
     this.applicationDefaultJvmArgs = listOf(
         "-Dfile.encoding=UTF-8",

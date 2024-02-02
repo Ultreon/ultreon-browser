@@ -1,9 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Browser" type="JetRunConfigurationType">
+  <configuration default="false" name="Run Browser" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="MainKt" />
     <module name="ultreon-browser.main" />
-    <shortenClasspath name="NONE" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+    <option name="VM_PARAMETERS" value="-javaagent:$ProjectFileDir$/build/classes/java/main" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

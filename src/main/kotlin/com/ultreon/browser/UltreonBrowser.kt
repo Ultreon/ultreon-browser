@@ -5,6 +5,7 @@ import com.ultreon.browser.dialog.settings.SettingsDialog
 import com.ultreon.browser.handler.*
 import com.ultreon.browser.intellijthemes.IJThemesPanel
 import com.ultreon.browser.util.*
+import homeDir
 import org.cef.CefApp
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
@@ -23,8 +24,6 @@ import javax.imageio.ImageIO
 import javax.swing.*
 import kotlin.system.exitProcess
 
-
-val dataDir: File = File(appData, "UltreonBrowser")
 
 /*
  * InternalFrameDemo.java requires:

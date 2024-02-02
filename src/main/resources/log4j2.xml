@@ -15,18 +15,8 @@
         <!--=======================-->
         <RollingRandomAccessFile name="LatestFile" fileName="logs/latest.log"
                                  filePattern="logs/%d{yyyy-MM-dd}-%i.log.gz">
-            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] (%logger) %msg%n"/>
-            <Policies>
-                <TimeBasedTriggeringPolicy/>
-                <OnStartupTriggeringPolicy/>
-            </Policies>
-        </RollingRandomAccessFile>
-
-        <RollingRandomAccessFile name="LatestFileAnsi" fileName="logs/latest.log.ansi"
-                                 filePattern="logs/%d{yyyy-MM-dd}-%i.log.ansi.gz">
-            <PatternLayout
-                    pattern="%style{[%d{HH:mm:ss}]}{blue} %highlight{[%t/%level]}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=darkGray, TRACE=blue} %style{(%logger{1}/%marker{1})}{cyan} %highlight{%msg%n}{FATAL=red, ERROR=red, WARN=normal, INFO=normal, DEBUG=normal, TRACE=normal}"
-                    disableAnsi="false"/>
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] (%logger/%marker) %msg%n"/>
+            <DefaultRolloverStrategy max="7" fileIndex="min"/>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
                 <OnStartupTriggeringPolicy/>
@@ -37,21 +27,7 @@
         <!--    Debug log file    -->
         <!--======================-->
         <RollingRandomAccessFile name="DebugFile" fileName="logs/debug.log" filePattern="logs/debug-%i.log.gz">
-            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] (%logger) %msg%n"/>
-
-            <!--========================-->
-            <!--    Keep 7 files max    -->
-            <!--========================-->
-            <DefaultRolloverStrategy max="7" fileIndex="min"/>
-            <Policies>
-                <SizeBasedTriggeringPolicy size="200MB"/>
-                <OnStartupTriggeringPolicy/>
-            </Policies>
-        </RollingRandomAccessFile>
-        <RollingRandomAccessFile name="DebugFileAnsi" fileName="logs/debug.log.ansi" filePattern="logs/debug-%i.log.ansi.gz">
-            <PatternLayout
-                    pattern="%style{[%d{HH:mm:ss}]}{blue} %highlight{[%t/%level]}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=darkGray, TRACE=blue} %style{(%logger{1}/%marker{1})}{cyan} %highlight{%msg%n}{FATAL=red, ERROR=red, WARN=normal, INFO=normal, DEBUG=normal, TRACE=normal}"
-                    disableAnsi="false"/>
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] (%logger/%marker) %msg%n"/>
 
             <!--========================-->
             <!--    Keep 7 files max    -->

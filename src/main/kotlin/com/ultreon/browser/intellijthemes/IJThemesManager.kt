@@ -22,7 +22,7 @@ package com.ultreon.browser.intellijthemes
 import com.formdev.flatlaf.json.Json
 import com.formdev.flatlaf.util.LoggingFacade
 import com.formdev.flatlaf.util.StringUtils
-import com.ultreon.browser.dataDir
+import dataDir
 import com.ultreon.browser.util.logError
 import java.io.File
 import java.io.IOException
