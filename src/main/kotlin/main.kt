@@ -132,14 +132,14 @@ fun path(path: String, vararg siblings: String): Path {
 
 val appData: File = when {
     isWindows() -> File(System.getenv("APPDATA").toString())
-    isLinux() -> File("~/.config/")
-    isMacintosh() -> File("~/Library/Applications Support")
+    isLinux() -> File(System.getProperty("user.home").toString() + "/.config/")
+    isMacintosh() -> File(System.getProperty("user.home").toString() + "/Library/Applications Support")
     else -> throw UnsupportedOperationException("Unsupported operating system: $osName")
 }
 val homeDir: File = when {
     isWindows() -> File(System.getProperty("user.home").toString())
-    isLinux() -> File("~/")
-    isMacintosh() -> File("~/")
+    isLinux() -> File(System.getProperty("user.home").toString() + "/")
+    isMacintosh() -> File(System.getProperty("user.home").toString() + "/")
     else -> File(System.getProperty("user.home").toString())
 }
 val dataDir: File = File(appData, "UltreonBrowser")

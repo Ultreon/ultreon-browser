@@ -14,8 +14,8 @@ public class PreMain {
 
         Path appData;
         if (osName.startsWith("windows")) appData = Path.of(System.getenv("APPDATA"));
-        else if (osName.startsWith("linux")) appData = Path.of("~/.config/");
-        else if (osName.startsWith("mac")) appData = Path.of("~/Library/Applications Support");
+        else if (osName.startsWith("linux")) appData = Path.of(System.getProperty("user.home") + "/.config/");
+        else if (osName.startsWith("mac")) appData = Path.of(System.getProperty("user.home") + "/Library/Applications Support");
         else throw new UnsupportedOperationException("Unsupported OS: " + System.getProperty("os.name"));
 
         var dataDir = appData.resolve("UltreonBrowser");
