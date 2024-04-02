@@ -29,7 +29,7 @@ val projectVersion = property("project_version")
 val appName = property("app_name")
 
 extensions.getByType<AppUtilsExt>().apply {
-    version = projectVersion
+    projectVersion = property("project_version").toString()
     projectGroup = project.group.toString()
     projectName = "Ultreon Browser"
     projectId = project.name
@@ -57,10 +57,6 @@ val buildDate: ZonedDateTime = ZonedDateTime.now()
 
 group = "com.ultreon"
 version = applicationVersion
-
-//extensions.getByName<GameUtilsExt>("appUtils") {
-//
-//}
 
 // Repository and dependencies configuration
 repositories {
