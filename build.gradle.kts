@@ -28,19 +28,6 @@ val projectName = property("project_name")
 val projectVersion = property("project_version")
 val appName = property("app_name")
 
-extensions.getByType<AppUtilsExt>().apply {
-    projectVersion = property("project_version").toString()
-    projectGroup = project.group.toString()
-    projectName = "Ultreon Browser"
-    projectId = project.name
-
-    mainClass = "PreMain"
-
-    packageProject = project
-
-    javaVersion = 17
-}
-
 // Dependency versions
 val flatlafVersion = "3.4"
 val chromeVersion = "116.0.19.1"
@@ -54,6 +41,19 @@ val applicationName = "$appName $projectVersion"
 val packageVersion = applicationVersion
 val viewVersion: String = applicationVersion
 val buildDate: ZonedDateTime = ZonedDateTime.now()
+
+extensions.getByType<AppUtilsExt>().apply {
+    projectVersion = applicationVersion
+    projectGroup = project.group.toString()
+    projectName = "Ultreon Browser"
+    projectId = project.name
+
+    mainClass = "PreMain"
+
+    packageProject = project
+
+    javaVersion = 17
+}
 
 group = "com.ultreon"
 version = applicationVersion
