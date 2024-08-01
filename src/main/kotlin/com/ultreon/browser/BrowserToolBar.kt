@@ -1,6 +1,7 @@
 package com.ultreon.browser
 
 import com.ultreon.browser.util.DownloadManager
+import runTask
 import java.awt.KeyboardFocusManager
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -25,7 +26,7 @@ class BrowserToolBar(
             addActionListener { tab.goForward()}
             this@BrowserToolBar.add(this)
         }
-        JButton("  🔄️  ").apply {
+        JButton("  🔄  ").apply {
             addActionListener {
                 tab.reload()
             }

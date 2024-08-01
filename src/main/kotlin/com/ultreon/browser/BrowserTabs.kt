@@ -3,6 +3,7 @@ package com.ultreon.browser
 import com.ultreon.browser.util.LOADING_ICON
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
+import runTask
 import java.awt.Dimension
 import java.awt.Image
 import java.awt.event.ActionEvent
@@ -71,7 +72,8 @@ class BrowserTabs(val client: CefClient, val main: UltreonBrowser) : JTabbedPane
     override fun removeTabAt(index: Int) {
         super.removeTabAt(index)
         val browserTab = tabs.removeAt(index)
-        browserTab.browser.close(true)
+
+        runTask { browserTab.browser.close(false) }
     }
 
     fun closeTab(browserTab: BrowserTab) {

@@ -44,6 +44,7 @@ class ProgressDialog(parent: Window?, title: String?) : JDialog(parent, title) {
                 }
             }
         })
+        isVisible = true
         pack()
         setLocationRelativeTo(parent)
     }

@@ -17,7 +17,7 @@ plugins {
     kotlin("jvm") version "1.9.22"
     id("java")
     id("application")
-    id("org.panteleyev.jpackageplugin") version "1.5.0"
+    id("org.panteleyev.jpackageplugin") version "1.+"
 }
 
 apply(plugin = "apputils")
@@ -30,7 +30,7 @@ val appName = property("app_name")
 
 // Dependency versions
 val flatlafVersion = "3.4"
-val chromeVersion = "116.0.19.1"
+val chromeVersion = "126.2.0"
 
 // Version information
 val buildNr: Int = System.getenv("GITHUB_BUILD_NUMBER")?.toIntOrNull() ?: 0
@@ -52,7 +52,7 @@ extensions.getByType<AppUtilsExt>().apply {
 
     packageProject = project
 
-    javaVersion = 17
+    javaVersion = 8
 }
 
 group = "com.ultreon"
@@ -71,6 +71,8 @@ configurations {
 
 dependencies {
     testImplementation(kotlin("test"))
+
+    implementation("org.burningwave:core:12.+")
 
     implementation("com.formdev:flatlaf:$flatlafVersion")!!
     implementation("com.formdev:flatlaf-intellij-themes:$flatlafVersion")!!
@@ -133,7 +135,7 @@ tasks.register<Zip>("packageZip") {
     doFirst {
         copy {
             from("src/meta/app.json")
-            into("$buildDir/temp/")
+            into("$projectDir/build/temp/")
 
             filesMatching("*.json") {
                 filter<ReplaceTokens>(
@@ -147,29 +149,29 @@ tasks.register<Zip>("packageZip") {
 
         copy {
             from("src/meta/appmeta.json")
-            into("$buildDir/temp/")
+            into("$projectDir/build/temp/")
         }
 
         copy {
             from(tasks.jar.get().outputs)
-            into("$buildDir/temp/")
+            into("$projectDir/build/temp/")
         }
     }
 
-    from(files("$buildDir/temp/*.jar")) {
+    from(files("$projectDir/build/temp/*.jar")) {
         rename { "${project.version}.jar" }
     }
 
     from(file("$projectDir/LICENSE"))
-    from(files("$buildDir/temp/*.json"))
+    from(files("$projectDir/build/temp/*.json"))
 
     archiveFileName.set("package.zip")
 
     doLast() {
-        delete("$buildDir/temp/")
+        delete("$projectDir/build/temp/")
         copy {
             from(outputs)
-            into("$buildDir/dist/")
+            into("$projectDir/build/dist/")
         }
     }
 }
@@ -201,22 +203,22 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 tasks.compileJava {
-    targetCompatibility = "17"
-    sourceCompatibility = "17"
+    targetCompatibility = "1.8"
+    sourceCompatibility = "1.8"
 }
 
 mkdir("$projectDir/run/")
 
 task("copyDependencies", Copy::class) {
-    from(configurations.runtimeClasspath).into("$buildDir/jars")
+    from(configurations.runtimeClasspath).into("$projectDir/build/jars")
 }
 
 task("copyJar", Copy::class) {
-    from(tasks.jar).into("$buildDir/jars")
+    from(tasks.jar).into("$projectDir/build/jars")
 }
 
 java {

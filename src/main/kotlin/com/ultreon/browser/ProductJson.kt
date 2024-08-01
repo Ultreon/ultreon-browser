@@ -23,7 +23,7 @@ class ProductJson internal constructor() {
     var buildDate: String = ""
         private set
 
-    @field:SerializedName("chrome-version")
+    @field:SerializedName("chromium-version")
     var chromeVersion: String = ""
         private set
 }

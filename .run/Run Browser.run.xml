@@ -2,7 +2,6 @@
   <configuration default="false" name="Run Browser" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="MainKt" />
     <module name="ultreon-browser.main" />
-    <option name="VM_PARAMETERS" value="-javaagent:$ProjectFileDir$/build/classes/java/main" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

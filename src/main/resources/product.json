@@ -3,5 +3,5 @@
   "name": "${app_name}",
   "version": "${version}",
   "build-date": "${build_date}",
-  "chrome-version": "${chrome_version}"
+  "chromium-version": "${chrome_version}"
 }

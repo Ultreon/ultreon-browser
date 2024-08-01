@@ -12,9 +12,13 @@ class DownloadProgressHandler : IProgressHandler {
 
     init {
         SwingUtilities.invokeLater {
-            progress = ProgressDialog(null, "Setting up CEF")
-            progress.size = Dimension(400, 120)
-            progress.isResizable = false
+            try {
+                progress = ProgressDialog(null, "Setting up CEF")
+                progress.size = Dimension(400, 120)
+                progress.isResizable = false
+            } catch (ignored: Exception) {
+                Runtime.getRuntime().exit(1)
+            }
         }
     }
 

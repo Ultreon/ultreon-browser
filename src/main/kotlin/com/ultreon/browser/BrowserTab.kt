@@ -1,11 +1,9 @@
 package com.ultreon.browser
 
-import com.ultreon.browser.util.LOADING_ICON
-import com.ultreon.browser.util.logError
-import com.ultreon.browser.util.logWarn
-import com.ultreon.browser.util.useOSR
+import com.ultreon.browser.util.*
 import org.cef.CefClient
 import org.cef.browser.CefBrowser
+import runTask
 import java.awt.*
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -75,46 +73,73 @@ class BrowserTab(
             it.font = Font(null, Font.PLAIN, 8)
             it.putClientProperty("JButton.buttonType", "roundRect")
             it.addActionListener {
-                browser.close(true) // FIXME do not force-close the browser tab.
+                runTask {
+                    try {
+                        browser.close(false)
+                    } catch (e: Exception) {
+                        logError("Failed to close tab!", e)
+                        Runtime.getRuntime().exit(1)
+                    }
+                }
+
                 tabs.removeTabAt(tabs.indexOfTab(this@BrowserTab))
                 tabs.browsers.remove(browser)
                 if (tabs.browsers.isEmpty()) {
-                    tabs.createTab("https://google.com")
+                    runTask {
+                        try {
+                            logDebug("Creating new tab!")
+                            tabs.createTab("https://google.com")
+                        } catch (e: Exception) {
+                            logError("Failed to close tab!", e)
+                            Runtime.getRuntime().exit(1)
+                        }
+
+                    }
                 }
             }
             pnlTab.add(it, gbc)
         }
 
-        this.pnlTab.addMouseListener(object : MouseAdapter() {
-            override fun mouseClicked(e: MouseEvent) {
-                if (e.button == 2) {
-                    SwingUtilities.invokeLater {
-                        tabs.removeTabAt(tabs.indexOfTab(this@BrowserTab))
-                    }
-                }
-                if (e.button == 1 && e.clickCount == 20) {
-                    try {
-                        val place = URL(this@BrowserTab.browser.url)
-                        if (place.host == "youtube.com" || place.host.endsWith(".youtube.com")) {
-                            this@BrowserTab.goTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        this.pnlTab.addMouseListener(
+            object : MouseAdapter() {
+                override fun mouseClicked(e: MouseEvent) {
+                    if (e.button == 2) {
+                        SwingUtilities.invokeLater {
+                            tabs.removeTabAt(tabs.indexOfTab(this@BrowserTab))
                         }
-                    } catch (e: Exception) {
-                        logError("Failed to open the rick roll!", e)
+                    }
+                    if (e.button == 1 && e.clickCount == 20) {
+                        try {
+                            val place = URL(this@BrowserTab.browser.url)
+                            if (place.host == "youtube.com" || place.host.endsWith(".youtube.com")) {
+                                this@BrowserTab.goTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+                            }
+                        } catch (e: Exception) {
+                            logError("Failed to open the rick roll!", e)
+                        }
                     }
                 }
-            }
-        })
+            })
 
-        this.addFocusListener(object : FocusAdapter() {
-            override fun focusGained(e: FocusEvent) {
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
-                this@BrowserTab.browser.setFocus(true)
-            }
+        main.addMouseListener(
+            object : MouseAdapter() {
+                override fun mouseClicked(e: MouseEvent) {
+                    if (e.component != this@BrowserTab)
+                        this@BrowserTab.browser.setFocus(false)
+                }
+            })
 
-            override fun focusLost(e: FocusEvent) {
-                this@BrowserTab.browser.setFocus(false)
-            }
-        })
+        this.addFocusListener(
+            object : FocusAdapter() {
+                override fun focusGained(e: FocusEvent) {
+                    KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner()
+                    this@BrowserTab.browser.setFocus(true)
+                }
+
+                override fun focusLost(e: FocusEvent) {
+                    this@BrowserTab.browser.setFocus(false)
+                }
+            })
 
         layout = BorderLayout()
         toolbar = BrowserToolBar(this, tabs)
@@ -138,10 +163,10 @@ class BrowserTab(
         this.title.text = usedTitle
     }
 
-    fun goTo(url: String) = SwingUtilities.invokeLater {
+    fun goTo(url: String) = runTask {
         if (url.startsWith("ultreon://")) {
             browser.loadURL(url)
-            return@invokeLater
+            return@runTask
         }
         if (url.isValidURL()) {
             if (url.startsWith("ultreon:")) {
@@ -181,7 +206,12 @@ class BrowserTab(
 
     private fun saveSource(source: String?) {
         if (source == null) {
-            JOptionPane.showMessageDialog(UltreonBrowser.instance, "Failed to get source", "Error", JOptionPane.ERROR_MESSAGE)
+            JOptionPane.showMessageDialog(
+                UltreonBrowser.instance,
+                "Failed to get source",
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            )
             return
         }
 
@@ -199,7 +229,7 @@ class BrowserTab(
         }
     }
 
-    fun reload() = if (loading) browser.stopLoad() else browser.reload()
+    fun reload() = runTask { if (loading) browser.stopLoad() else browser.reload() }
 }
 
 private fun String.encodeUrl(): String {

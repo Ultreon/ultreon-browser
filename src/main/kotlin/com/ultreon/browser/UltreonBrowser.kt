@@ -114,7 +114,7 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
                 downloadItem: CefDownloadItem?,
                 suggestedName: String?,
                 callback: CefBeforeDownloadCallback
-            ) {
+            ): Boolean {
                 SwingUtilities.invokeLater {
                     val result = JOptionPane.showConfirmDialog(
                         this@UltreonBrowser.tabs,
@@ -127,7 +127,11 @@ class UltreonBrowser(val app: CefApp) : JFrame("$APP_NAME - $APP_VERSION") {
                     if (result == JOptionPane.YES_OPTION)
                         this@UltreonBrowser.downloadItem(callback, suggestedName ?: "file")
                     else callback.Continue(null, false)
+
+                    return@invokeLater
                 }
+
+                return true
             }
 
             override fun onDownloadUpdated(

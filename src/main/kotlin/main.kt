@@ -5,6 +5,7 @@ import com.ultreon.browser.*
 import com.ultreon.browser.util.*
 import me.friwi.jcefmaven.CefAppBuilder
 import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
+import org.burningwave.core.classes.Modules
 import org.cef.CefApp
 import org.cef.OS.*
 import org.oxbow.swingbits.dialog.task.TaskDialogs
@@ -15,10 +16,18 @@ import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.CompletableFuture
+import java.util.*
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
+import kotlin.io.path.writeText
 import kotlin.system.exitProcess
+
+var crashing: Boolean = false
+private val tasks: MutableList<() -> Unit> = Collections.synchronizedList(mutableListOf())
+
+fun interface Task {
+    fun run()
+}
 
 lateinit var argv: Array<String>
     private set
@@ -31,51 +40,63 @@ fun main(args: Array<String>) {
 private fun main() {
     logInfo("Starting browser...")
 
+    val create = Modules.create()
+    create.exportAllToAll()
+
     UltreonURLHandler().setHandler()
 
     AppPrefs.init(APP_ID)
     AppPrefs.setupLaf(arrayOf())
 
-    CompletableFuture.runAsync {
-        //Create a new CefAppBuilder instance
-        val builder = CefAppBuilder()
+    //Create a new CefAppBuilder instance
+    val builder = CefAppBuilder()
 
-        builder.cefSettings.windowless_rendering_enabled = useOSR
+    builder.cefSettings.windowless_rendering_enabled = useOSR
 
-        // USE builder.setAppHandler INSTEAD OF CefApp.addAppHandler!
-        // Fixes compatibility issues with MacOSX
-        builder.setAppHandler(object : MavenCefAppHandlerAdapter() {
-            override fun stateHasChanged(state: CefApp.CefAppState) {
-                // Shutdown the app if the native CEF part is terminated
-                if (state == CefApp.CefAppState.TERMINATED) exitProcess(0)
+    // USE builder.setAppHandler INSTEAD OF CefApp.addAppHandler!
+    // Fixes compatibility issues with MacOSX
+    builder.setAppHandler(object : MavenCefAppHandlerAdapter() {
+        override fun stateHasChanged(state: CefApp.CefAppState) {
+            // Shutdown the app if the native CEF part is terminated
+            if (state == CefApp.CefAppState.TERMINATED) exitProcess(0)
+        }
+    })
+
+    //Configure the builder instance
+    builder.setInstallDir(File(dataDir, "CEF")) //Default
+
+    builder.setProgressHandler(DownloadProgressHandler())
+
+    builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
+    builder.cefSettings.cache_path = dataDir.toString()
+    builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION Chrome/$CHROME_VERSION"
+
+    builder.addJcefArgs(*argv)
+
+    //Build a CefApp instance using the configuration above
+    val app = builder.build()
+    SwingUtilities.invokeLater {
+        Thread.setDefaultUncaughtExceptionHandler { _, ex ->
+            crash(ex)
+        }
+        UltreonBrowser.start(app)
+    }
+
+    while (true) {
+        try {
+            if (tasks.isNotEmpty()) {
+                tasks.removeFirst()()
             }
-        })
-
-        //Configure the builder instance
-        builder.setInstallDir(File(dataDir, "CEF")) //Default
-
-        builder.setProgressHandler(DownloadProgressHandler())
-
-        builder.cefSettings.windowless_rendering_enabled = useOSR //Default - select OSR mode
-        builder.cefSettings.cache_path = dataDir.toString()
-        builder.cefSettings.user_agent_product = "UltreonBrowser/$APP_VERSION Chrome/$CHROME_VERSION"
-
-        builder.addJcefArgs(*argv)
-
-        //Build a CefApp instance using the configuration above
-        val app = builder.build()
-        SwingUtilities.invokeLater {
-            Thread.setDefaultUncaughtExceptionHandler { _, ex ->
-                crash(ex)
-            }
-            UltreonBrowser.start(app)
+        } catch (e: Throwable) {
+            crash(e)
         }
     }
 
+    Runtime.getRuntime().exit(-1)
+}
 
-    while (true) {
-        Thread.sleep(1000)
-    }
+fun runTask(task: () -> Unit) {
+    tasks.add(task)
 }
 
 @Throws(Exception::class)
@@ -100,14 +121,12 @@ fun crash(e: Throwable) {
 
         runCatching {
             Files.createDirectories(path("UB-Crashes"))
-            Files.writeString(
-                path(
-                    "UB-Crashes",
-                    "crash-%s.txt".format(
-                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
-                    )
-                ), crashLog, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE
-            )
+            path(
+                "UB-Crashes",
+                "crash-%s.txt".format(
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
+                )
+            ).writeText(crashLog, options = arrayOf(StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE))
         }
     }
 
@@ -117,12 +136,22 @@ fun crash(e: Throwable) {
         // ignore
     }
     SwingUtilities.invokeLater {
+        if (crashing) return@invokeLater
+        crashing = true
         val lookAndFeel = UIManager.getLookAndFeel()
-        UIManager.setLookAndFeel(FlatLightLaf())
+        try {
+            UIManager.setLookAndFeel(FlatLightLaf())
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
         e.printStackTrace()
-        TaskDialogs.showException(e)
-        UIManager.setLookAndFeel(lookAndFeel)
-        exitProcess(1)
+        try {
+            TaskDialogs.showException(e)
+            UIManager.setLookAndFeel(lookAndFeel)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+        Runtime.getRuntime().exit(1)
     }
 }
 

@@ -18,7 +18,7 @@ class AboutPanel : JPanel() {
                 .replace("@(project-name)", APP_NAME)
                 .replace("@(version)", APP_VERSION)
                 .replace("@(build-date)", BUILD_DATE)
-                .replace("@(chrome-version)", CHROME_VERSION)
+                .replace("@(chromium-version)", CHROME_VERSION)
                 .replace("@(image)", APP_BANNER_REF.toString())
             it.close()
             return@let readText
