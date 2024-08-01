@@ -235,3 +235,74 @@ application {
         "-Dapp.version=${viewVersion}",
     )
 }
+
+task("copyDependencies", Copy::class) {
+    from(configurations.runtimeClasspath).into("$buildDir/jars")
+}
+
+task("copyJar", Copy::class) {
+    from(tasks.jar).into("$buildDir/jars")
+}
+
+// Clear build/dist
+task("cleanDist", Delete::class) {
+    delete(fileTree("$buildDir/dist"))
+    Files.deleteIfExists(Paths.get("$buildDir/dist"))
+    group = "build"
+}
+
+// JPackage tasks configuration
+tasks.jpackage {
+    dependsOn("build", "copyDependencies", "copyJar", "cleanDist")
+
+    group = "package"
+
+    input  = "$buildDir/jars"
+    destination = "$buildDir/dist"
+
+    appName = project.property("app_name").toString()
+    appVersion = project.version.toString()
+    vendor = "Ultreon Team"
+    copyright = "Copyright (c) 2022 Ultreon Team"
+    runtimeImage = System.getProperty("java.home")
+
+    mainJar = tasks.jar.get().archiveFileName.get()
+    mainClass = "PreMain"
+
+    destination = "$buildDir/dist"
+
+    javaOptions = listOf("-Dfile.encoding=UTF-8")
+
+    aboutUrl = "https://github.com/Ultreon/ultreon-browser"
+
+    mac {
+        icon = "icons/icon.icns"
+        macPackageIdentifier = "com.ultreon.browser"
+        macPackageName = "ultreon-browser"
+        appVersion = packageVersion.replace(Regex("(\\d+\\.\\d+\\.\\d+).*"), "$1")
+    }
+
+    linux {
+        icon = "icons/icon.png"
+        linuxPackageName = "ultreon-browser"
+        linuxDebMaintainer = "Ultreon Team"
+        linuxRpmLicenseType = "Ultreon API License v1.1"
+        linuxAppRelease = "2"
+        linuxShortcut = true
+        appVersion = project.version.toString()
+    }
+
+    windows {
+        icon = "icons/icon.ico"
+        winMenu = true
+        winDirChooser = true
+        winConsole = false
+        winPerUserInstall = true
+        winShortcutPrompt = true
+        winShortcut = false
+        winUpgradeUuid = "340c6842-b3bb-4173-bc87-c7c831cd1605"
+        winMenuGroup = "Ultreon Team"
+        appVersion = viewVersion.replace("+local", ".0").replace("+", ".")
+        type = ImageType.MSI
+    }
+}
