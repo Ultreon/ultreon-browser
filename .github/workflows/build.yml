@@ -43,7 +43,7 @@ jobs:
             17    # Minimum supported
         ]
         # and run on both Linux and not Windows
-        os: [macOS-11]
+        os: [macOS-13]
     runs-on: ${{ matrix.os }}
     name: Build on ${{ matrix.os }}
     steps:
