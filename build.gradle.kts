@@ -236,10 +236,6 @@ application {
     )
 }
 
-task("copyJar", Copy::class) {
-    from(tasks.jar).into("$buildDir/jars")
-}
-
 // Clear build/dist
 task("cleanDist", Delete::class) {
     delete(fileTree("$buildDir/dist"))
