@@ -27,7 +27,7 @@ jobs:
       - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: Build artifact
-        run: ./gradlew jpackage jpackageAlt --info
+        run: ./gradlew jpackage --info
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
       - name: Capture the build artifacts
@@ -58,7 +58,7 @@ jobs:
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: build
-        run: ./gradlew jpackage jpackageAlt --info
+        run: ./gradlew jpackage --info
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
       - name: capture the build artifacts
@@ -87,7 +87,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: build
-        run: cmd /c "gradlew.bat jpackage jpackageAlt --info"
+        run: cmd /c "gradlew.bat jpackage --info"
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
       - name: capture the build artifacts
